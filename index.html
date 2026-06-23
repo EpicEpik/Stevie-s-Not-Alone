@@ -14,15 +14,14 @@
             color: white;
         }
 
-        /* GAME AREA */
         #game {
             width: 100vw;
             height: 100vh;
-            background: radial-gradient(circle at center, #3b2a1a 0%, #000 70%);
+            background: #1a1208;
             position: relative;
         }
 
-        /* TITLE + BEDROOM SCREENS */
+        /* TITLE + BEDROOM */
         #title-screen, #bedroom {
             position: absolute;
             width: 100%;
@@ -31,7 +30,6 @@
             padding-top: 10%;
         }
 
-        /* BIG PLAY BUTTON */
         #play-btn {
             padding: 20px 40px;
             font-size: 28px;
@@ -39,7 +37,6 @@
             cursor: pointer;
         }
 
-        /* HAND BUTTONS */
         #hand-options {
             margin: 20px;
         }
@@ -72,28 +69,66 @@
             bottom: 20px;
         }
 
-        /* DEMON EYES (FAKE 3D BY SCALE + BLUR) */
-        #eyes {
+        /* DEMON BUILT FROM SHAPES */
+        #demon {
             display: none;
             position: absolute;
-            top: 40%;
+            top: 10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 400px;
+        }
+
+        /* Body */
+        #demon-body {
+            width: 120px;
+            height: 260px;
+            background: #2e5f2e;
+            border-radius: 60px;
+            margin: 0 auto;
+            filter: brightness(0.8);
+        }
+
+        /* Head */
+        #demon-head {
+            width: 160px;
+            height: 160px;
+            background: #3a7a3a;
+            border-radius: 50%;
+            margin: 0 auto;
+            margin-bottom: -20px;
+        }
+
+        /* Smile */
+        #demon-mouth {
+            width: 120px;
+            height: 40px;
+            background: #000;
+            border-radius: 0 0 60px 60px;
+            margin: 0 auto;
+            margin-top: -20px;
+        }
+
+        /* Eyes */
+        #eyes {
+            position: absolute;
+            top: 35%;
             left: 50%;
             transform: translateX(-50%);
             font-size: 80px;
             color: red;
             letter-spacing: 40px;
             opacity: 0;
-            filter: blur(2px);
-            transition: opacity 0.5s ease, transform 0.5s ease, filter 0.5s ease;
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
 
-        .eyes-close {
-            transform: translateX(-50%) scale(1.3);
-            filter: blur(0px);
+        .eyes-visible {
+            opacity: 1;
         }
 
         .tilt {
-            transform: translateX(-50%) scale(1.3) rotate(20deg);
+            transform: translateX(-50%) rotate(20deg);
         }
 
         /* SCREEN SHAKE */
@@ -113,6 +148,7 @@
 <body>
 
     <div id="game">
+
         <!-- TITLE SCREEN -->
         <div id="title-screen">
             <h1>Stevie's Not Alone</h1>
@@ -127,17 +163,25 @@
             <button id="play-btn" style="display:none;">Play</button>
         </div>
 
-        <!-- BEDROOM SCENE -->
+        <!-- BEDROOM -->
         <div id="bedroom" style="display:none;">
             <p id="dialogue"></p>
             <p id="hint" class="hint">Press E to toggle the light switch.</p>
         </div>
 
-        <!-- HAND ANIMATION -->
+        <!-- HAND -->
         <div id="hand-anim"></div>
+
+        <!-- DEMON -->
+        <div id="demon">
+            <div id="demon-head"></div>
+            <div id="demon-mouth"></div>
+            <div id="demon-body"></div>
+        </div>
 
         <!-- DEMON EYES -->
         <div id="eyes">● ●</div>
+
     </div>
 
     <script>
@@ -174,6 +218,7 @@
             if (!inBedroom) return;
 
             if (e.key === "e" || e.key === "E") {
+
                 const hand = document.getElementById("hand-anim");
                 hand.style.display = "block";
                 hand.classList.add("hand-up");
@@ -215,15 +260,16 @@
 
         // DEMON JUMPSCARE
         function jumpscare() {
+            const demon = document.getElementById("demon");
             const eyes = document.getElementById("eyes");
 
-            eyes.style.display = "block";
-            eyes.style.opacity = "1";
-            eyes.classList.add("eyes-close");
+            demon.style.display = "block";
+            eyes.classList.add("eyes-visible");
 
             document.body.classList.add("shake");
 
             setTimeout(() => {
+                demon.classList.add("tilt");
                 eyes.classList.add("tilt");
             }, 500);
 
