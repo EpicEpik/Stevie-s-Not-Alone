@@ -3,74 +3,23 @@
 <head>
     <title>Stevie's Not Alone</title>
     <style>
-
-        /* FULLSCREEN */
         html, body {
             margin: 0;
             padding: 0;
             height: 100%;
             width: 100%;
             overflow: hidden;
-            background: black;
+            background: #000;
             font-family: Arial, sans-serif;
             color: white;
         }
 
-        /* 3D CAMERA */
-        #world {
+        /* GAME AREA */
+        #game {
             width: 100vw;
             height: 100vh;
-            perspective: 900px;
-            overflow: hidden;
+            background: radial-gradient(circle at center, #3b2a1a 0%, #000 70%);
             position: relative;
-        }
-
-        #camera {
-            width: 100%;
-            height: 100%;
-            transform-style: preserve-3d;
-            transform: translateZ(0px);
-            transition: transform 0.2s linear;
-        }
-
-        /* 3D HALLWAY */
-        .wall {
-            position: absolute;
-            width: 800px;
-            height: 800px;
-            background: #5c432a; /* brown backrooms wall */
-            border: 3px solid #3a2a1a;
-            opacity: 0.95;
-        }
-
-        /* Floor + ceiling */
-        #floor, #ceiling {
-            position: absolute;
-            width: 800px;
-            height: 800px;
-            background: #4a3824;
-        }
-
-        #floor {
-            transform: rotateX(90deg) translateZ(400px);
-        }
-
-        #ceiling {
-            transform: rotateX(-90deg) translateZ(400px);
-        }
-
-        /* Left + right walls */
-        #left-wall {
-            transform: rotateY(90deg) translateZ(400px);
-        }
-
-        #right-wall {
-            transform: rotateY(-90deg) translateZ(400px);
-        }
-
-        /* Front wall (where demon appears) */
-        #front-wall {
-            transform: translateZ(-800px);
         }
 
         /* TITLE + BEDROOM SCREENS */
@@ -80,7 +29,6 @@
             height: 100%;
             text-align: center;
             padding-top: 10%;
-            background: rgba(0,0,0,0.8);
         }
 
         /* BIG PLAY BUTTON */
@@ -103,6 +51,11 @@
             cursor: pointer;
         }
 
+        .hint {
+            opacity: 0.6;
+            font-size: 14px;
+        }
+
         /* HAND ANIMATION */
         #hand-anim {
             display: none;
@@ -119,22 +72,28 @@
             bottom: 20px;
         }
 
-        /* DEMON EYES */
+        /* DEMON EYES (FAKE 3D BY SCALE + BLUR) */
         #eyes {
             display: none;
             position: absolute;
             top: 40%;
             left: 50%;
-            transform: translateX(-50%) translateZ(-700px);
+            transform: translateX(-50%);
             font-size: 80px;
             color: red;
             letter-spacing: 40px;
             opacity: 0;
-            transition: opacity 0.5s ease, transform 0.5s ease;
+            filter: blur(2px);
+            transition: opacity 0.5s ease, transform 0.5s ease, filter 0.5s ease;
+        }
+
+        .eyes-close {
+            transform: translateX(-50%) scale(1.3);
+            filter: blur(0px);
         }
 
         .tilt {
-            transform: translateX(-50%) translateZ(-700px) rotate(20deg);
+            transform: translateX(-50%) scale(1.3) rotate(20deg);
         }
 
         /* SCREEN SHAKE */
@@ -149,62 +108,44 @@
             75% { transform: translate(10px, 10px); }
             100% { transform: translate(0, 0); }
         }
-
-        .hint {
-            opacity: 0.6;
-            font-size: 14px;
-        }
-
     </style>
 </head>
 <body>
 
-    <!-- 3D WORLD -->
-    <div id="world">
-        <div id="camera">
+    <div id="game">
+        <!-- TITLE SCREEN -->
+        <div id="title-screen">
+            <h1>Stevie's Not Alone</h1>
 
-            <div id="floor" class="wall"></div>
-            <div id="ceiling" class="wall"></div>
-            <div id="left-wall" class="wall"></div>
-            <div id="right-wall" class="wall"></div>
-            <div id="front-wall" class="wall"></div>
+            <p>Select your hand:</p>
+            <div id="hand-options">
+                <button class="hand" data-hand="black">Black Hand</button>
+                <button class="hand" data-hand="tan">Tan Hand</button>
+                <button class="hand" data-hand="white">White Hand</button>
+            </div>
 
-            <div id="eyes">● ●</div>
-
-        </div>
-    </div>
-
-    <!-- TITLE SCREEN -->
-    <div id="title-screen">
-        <h1>Stevie's Not Alone</h1>
-
-        <p>Select your hand:</p>
-        <div id="hand-options">
-            <button class="hand" data-hand="black">Black Hand</button>
-            <button class="hand" data-hand="tan">Tan Hand</button>
-            <button class="hand" data-hand="white">White Hand</button>
+            <button id="play-btn" style="display:none;">Play</button>
         </div>
 
-        <button id="play-btn" style="display:none;">Play</button>
-    </div>
+        <!-- BEDROOM SCENE -->
+        <div id="bedroom" style="display:none;">
+            <p id="dialogue"></p>
+            <p id="hint" class="hint">Press E to toggle the light switch.</p>
+        </div>
 
-    <!-- BEDROOM SCENE -->
-    <div id="bedroom" style="display:none;">
-        <p id="dialogue"></p>
-        <p id="hint" class="hint">Press E to toggle the light switch.</p>
-    </div>
+        <!-- HAND ANIMATION -->
+        <div id="hand-anim"></div>
 
-    <!-- HAND ANIMATION -->
-    <div id="hand-anim"></div>
+        <!-- DEMON EYES -->
+        <div id="eyes">● ●</div>
+    </div>
 
     <script>
-
         let chosenHand = null;
         let inBedroom = false;
         let lightTried = false;
-        let zPos = 0;
 
-        /* HAND SELECTION */
+        // HAND SELECTION
         document.querySelectorAll(".hand").forEach(btn => {
             btn.addEventListener("click", () => {
                 chosenHand = btn.dataset.hand;
@@ -218,7 +159,7 @@
             });
         });
 
-        /* START GAME */
+        // START GAME
         document.getElementById("play-btn").addEventListener("click", () => {
             document.getElementById("title-screen").style.display = "none";
             document.getElementById("bedroom").style.display = "block";
@@ -228,21 +169,11 @@
                 "STEVIE: Mother? Father? I had a nightmare...";
         });
 
-        /* MOVEMENT (W KEY) */
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "w" || e.key === "W") {
-                zPos -= 20;
-                document.getElementById("camera").style.transform =
-                    `translateZ(${zPos}px)`;
-            }
-        });
-
-        /* LIGHT SWITCH EVENT */
+        // LIGHT SWITCH EVENT
         document.addEventListener("keydown", (e) => {
             if (!inBedroom) return;
 
             if (e.key === "e" || e.key === "E") {
-
                 const hand = document.getElementById("hand-anim");
                 hand.style.display = "block";
                 hand.classList.add("hand-up");
@@ -264,7 +195,7 @@
             }
         });
 
-        /* CHOICE BUTTONS */
+        // CHOICE BUTTONS
         function showChoices() {
             const choice1 = document.createElement("button");
             const choice2 = document.createElement("button");
@@ -282,12 +213,13 @@
             document.getElementById("bedroom").appendChild(choice2);
         }
 
-        /* DEMON JUMPSCARE */
+        // DEMON JUMPSCARE
         function jumpscare() {
             const eyes = document.getElementById("eyes");
 
             eyes.style.display = "block";
             eyes.style.opacity = "1";
+            eyes.classList.add("eyes-close");
 
             document.body.classList.add("shake");
 
@@ -300,7 +232,6 @@
                 document.getElementById("bedroom").style.display = "none";
             }, 1500);
         }
-
     </script>
 
 </body>
