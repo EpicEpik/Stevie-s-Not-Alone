@@ -1,14 +1,76 @@
-stevies-not-alone/
-│
-├── index.html
-├── style.css
-└── script.js
-
 <!DOCTYPE html>
 <html>
 <head>
     <title>Stevie's Not Alone</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+
+        /* FULLSCREEN */
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: black;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+
+        /* CENTER EVERYTHING */
+        #title-screen, #bedroom {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            padding-top: 10%;
+        }
+
+        /* HAND BUTTONS */
+        #hand-options {
+            margin: 20px;
+        }
+
+        .hand {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 18px;
+        }
+
+        /* DEMON */
+        #demon {
+            display: none;
+            position: absolute;
+            width: 60%;
+            left: 20%;
+            top: 5%;
+            filter: brightness(0.3) contrast(2) blur(1px);
+            transition: transform 0.5s ease;
+        }
+
+        /* HEAD TILT */
+        .tilt {
+            transform: rotate(25deg);
+        }
+
+        /* SCREEN SHAKE */
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(10px, -10px); }
+            50% { transform: translate(-10px, 10px); }
+            75% { transform: translate(10px, 10px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* HINT TEXT */
+        .hint {
+            opacity: 0.6;
+            font-size: 14px;
+        }
+
+    </style>
 </head>
 <body>
 
@@ -32,143 +94,82 @@ stevies-not-alone/
         <p class="hint">Press E to toggle the light switch.</p>
     </div>
 
-    <!-- DEMON IMAGE (YOU ADD YOUR PNG) -->
+    <!-- DEMON IMAGE -->
     <img id="demon" src="demon.png">
 
-    <script src="script.js"></script>
-</body>
-</html>
-/* FULLSCREEN */
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-    background: black;
-    font-family: Arial, sans-serif;
-    color: white;
-}
+    <script>
 
-/* CENTER EVERYTHING */
-#title-screen, #bedroom {
-    width: 100%;
-    height: 100%;
-    text-align: center;
-    padding-top: 10%;
-}
+        let chosenHand = null;
+        let inBedroom = false;
+        let lightTried = false;
 
-/* HAND BUTTONS */
-#hand-options {
-    margin: 20px;
-}
+        // HAND SELECTION
+        document.querySelectorAll(".hand").forEach(btn => {
+            btn.addEventListener("click", () => {
+                chosenHand = btn.dataset.hand;
+                document.getElementById("play-btn").style.display = "block";
+            });
+        });
 
-.hand {
-    padding: 10px 20px;
-    margin: 5px;
-    font-size: 18px;
-}
-
-/* DEMON */
-#demon {
-    display: none;
-    position: absolute;
-    width: 60%;
-    left: 20%;
-    top: 5%;
-    filter: brightness(0.3) contrast(2) blur(1px);
-    transition: transform 0.5s ease;
-}
-
-/* HEAD TILT */
-.tilt {
-    transform: rotate(25deg);
-}
-
-/* SCREEN SHAKE */
-.shake {
-    animation: shake 0.5s;
-}
-
-@keyframes shake {
-    0% { transform: translate(0, 0); }
-    25% { transform: translate(10px, -10px); }
-    50% { transform: translate(-10px, 10px); }
-    75% { transform: translate(10px, 10px); }
-    100% { transform: translate(0, 0); }
-}
-
-/* HINT TEXT */
-.hint {
-    opacity: 0.6;
-    font-size: 14px;
-}
-let chosenHand = null;
-let inBedroom = false;
-let lightTried = false;
-
-// HAND SELECTION
-document.querySelectorAll(".hand").forEach(btn => {
-    btn.addEventListener("click", () => {
-        chosenHand = btn.dataset.hand;
-        document.getElementById("play-btn").style.display = "block";
-    });
-});
-
-// START GAME
-document.getElementById("play-btn").addEventListener("click", () => {
-    document.getElementById("title-screen").style.display = "none";
-    document.getElementById("bedroom").style.display = "block";
-    inBedroom = true;
-
-    document.getElementById("dialogue").innerText =
-        "STEVIE: Mother? Father? I had a nightmare...";
-});
-
-// LIGHT SWITCH EVENT
-document.addEventListener("keydown", (e) => {
-    if (!inBedroom) return;
-
-    if (e.key === "e" || e.key === "E") {
-        if (!lightTried) {
-            lightTried = true;
+        // START GAME
+        document.getElementById("play-btn").addEventListener("click", () => {
+            document.getElementById("title-screen").style.display = "none";
+            document.getElementById("bedroom").style.display = "block";
+            inBedroom = true;
 
             document.getElementById("dialogue").innerText =
-                "STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.";
+                "STEVIE: Mother? Father? I had a nightmare...";
+        });
 
-            showChoices();
+        // LIGHT SWITCH EVENT
+        document.addEventListener("keydown", (e) => {
+            if (!inBedroom) return;
+
+            if (e.key === "e" || e.key === "E") {
+                if (!lightTried) {
+                    lightTried = true;
+
+                    document.getElementById("dialogue").innerText =
+                        "STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.";
+
+                    showChoices();
+                }
+            }
+        });
+
+        // CHOICE BUTTONS
+        function showChoices() {
+            const choice1 = document.createElement("button");
+            const choice2 = document.createElement("button");
+
+            choice1.innerText = "Fix generators";
+            choice2.innerText = "Go back to sleep";
+
+            choice1.onclick = () => alert("Generator path coming soon!");
+            choice2.onclick = () => jumpscare();
+
+            document.getElementById("bedroom").appendChild(choice1);
+            document.getElementById("bedroom").appendChild(choice2);
         }
-    }
-});
 
-// CHOICE BUTTONS
-function showChoices() {
-    const choice1 = document.createElement("button");
-    const choice2 = document.createElement("button");
+        // DEMON JUMPSCARE
+        function jumpscare() {
+            const demon = document.getElementById("demon");
 
-    choice1.innerText = "Fix generators";
-    choice2.innerText = "Go back to sleep";
+            demon.style.display = "block";
+            document.body.classList.add("shake");
 
-    choice1.onclick = () => alert("Generator path coming soon!");
-    choice2.onclick = () => jumpscare();
+            setTimeout(() => {
+                demon.classList.add("tilt");
+            }, 500);
 
-    document.getElementById("bedroom").appendChild(choice1);
-    document.getElementById("bedroom").appendChild(choice2);
-}
+            setTimeout(() => {
+                document.body.style.backgroundColor = "black";
+                document.getElementById("bedroom").style.display = "none";
+            }, 1500);
+        }
 
-// DEMON JUMPSCARE
-function jumpscare() {
-    const demon = document.getElementById("demon");
+    </script>
 
-    demon.style.display = "block";
-    document.body.classList.add("shake");
-
-    setTimeout(() => {
-        demon.classList.add("tilt");
-    }, 500);
-
-    setTimeout(() => {
-        document.body.style.backgroundColor = "black";
-        document.getElementById("bedroom").style.display = "none";
-    }, 1500);
-}
+</body>
+</html>
