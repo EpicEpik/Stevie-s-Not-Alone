@@ -1,3 +1,9 @@
+stevies-not-alone/
+│
+├── index.html
+├── style.css
+└── script.js
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,33 +12,102 @@
 </head>
 <body>
 
+    <!-- TITLE SCREEN -->
     <div id="title-screen">
         <h1>Stevie's Not Alone</h1>
 
         <p>Select your hand:</p>
-        <button class="hand" data-hand="black">Black Hand</button>
-        <button class="hand" data-hand="tan">Tan Hand</button>
-        <button class="hand" data-hand="white">White Hand</button>
+        <div id="hand-options">
+            <button class="hand" data-hand="black">Black Hand</button>
+            <button class="hand" data-hand="tan">Tan Hand</button>
+            <button class="hand" data-hand="white">White Hand</button>
+        </div>
 
         <button id="play-btn" style="display:none;">Play</button>
     </div>
 
+    <!-- BEDROOM SCENE -->
     <div id="bedroom" style="display:none;">
         <p id="dialogue"></p>
-        <p>Press E to toggle the light switch.</p>
+        <p class="hint">Press E to toggle the light switch.</p>
     </div>
 
-    <img id="jumpscare" src="https://i.imgur.com/2yaf2wb.png">
+    <!-- DEMON IMAGE (YOU ADD YOUR PNG) -->
+    <img id="demon" src="demon.png">
 
     <script src="script.js"></script>
 </body>
 </html>
+/* FULLSCREEN */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: black;
+    font-family: Arial, sans-serif;
+    color: white;
+}
 
+/* CENTER EVERYTHING */
+#title-screen, #bedroom {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    padding-top: 10%;
+}
+
+/* HAND BUTTONS */
+#hand-options {
+    margin: 20px;
+}
+
+.hand {
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 18px;
+}
+
+/* DEMON */
+#demon {
+    display: none;
+    position: absolute;
+    width: 60%;
+    left: 20%;
+    top: 5%;
+    filter: brightness(0.3) contrast(2) blur(1px);
+    transition: transform 0.5s ease;
+}
+
+/* HEAD TILT */
+.tilt {
+    transform: rotate(25deg);
+}
+
+/* SCREEN SHAKE */
+.shake {
+    animation: shake 0.5s;
+}
+
+@keyframes shake {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(10px, -10px); }
+    50% { transform: translate(-10px, 10px); }
+    75% { transform: translate(10px, 10px); }
+    100% { transform: translate(0, 0); }
+}
+
+/* HINT TEXT */
+.hint {
+    opacity: 0.6;
+    font-size: 14px;
+}
 let chosenHand = null;
 let inBedroom = false;
 let lightTried = false;
 
-// Hand selection
+// HAND SELECTION
 document.querySelectorAll(".hand").forEach(btn => {
     btn.addEventListener("click", () => {
         chosenHand = btn.dataset.hand;
@@ -40,7 +115,7 @@ document.querySelectorAll(".hand").forEach(btn => {
     });
 });
 
-// Start game
+// START GAME
 document.getElementById("play-btn").addEventListener("click", () => {
     document.getElementById("title-screen").style.display = "none";
     document.getElementById("bedroom").style.display = "block";
@@ -50,13 +125,14 @@ document.getElementById("play-btn").addEventListener("click", () => {
         "STEVIE: Mother? Father? I had a nightmare...";
 });
 
-// Light switch logic
+// LIGHT SWITCH EVENT
 document.addEventListener("keydown", (e) => {
     if (!inBedroom) return;
 
     if (e.key === "e" || e.key === "E") {
         if (!lightTried) {
             lightTried = true;
+
             document.getElementById("dialogue").innerText =
                 "STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.";
 
@@ -65,7 +141,7 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-// Show choice buttons
+// CHOICE BUTTONS
 function showChoices() {
     const choice1 = document.createElement("button");
     const choice2 = document.createElement("button");
@@ -80,8 +156,19 @@ function showChoices() {
     document.getElementById("bedroom").appendChild(choice2);
 }
 
-// Jumpscare
+// DEMON JUMPSCARE
 function jumpscare() {
-    document.getElementById("jumpscare").style.display = "block";
-    new Audio("https://www.myinstants.com/media/sounds/scream.mp3").play();
+    const demon = document.getElementById("demon");
+
+    demon.style.display = "block";
+    document.body.classList.add("shake");
+
+    setTimeout(() => {
+        demon.classList.add("tilt");
+    }, 500);
+
+    setTimeout(() => {
+        document.body.style.backgroundColor = "black";
+        document.getElementById("bedroom").style.display = "none";
+    }, 1500);
 }
