@@ -11,17 +11,76 @@
             height: 100%;
             width: 100%;
             overflow: hidden;
-            background: #111;
+            background: black;
             font-family: Arial, sans-serif;
             color: white;
         }
 
+        /* 3D CAMERA */
+        #world {
+            width: 100vw;
+            height: 100vh;
+            perspective: 900px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #camera {
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transform: translateZ(0px);
+            transition: transform 0.2s linear;
+        }
+
+        /* 3D HALLWAY */
+        .wall {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            background: #5c432a; /* brown backrooms wall */
+            border: 3px solid #3a2a1a;
+            opacity: 0.95;
+        }
+
+        /* Floor + ceiling */
+        #floor, #ceiling {
+            position: absolute;
+            width: 800px;
+            height: 800px;
+            background: #4a3824;
+        }
+
+        #floor {
+            transform: rotateX(90deg) translateZ(400px);
+        }
+
+        #ceiling {
+            transform: rotateX(-90deg) translateZ(400px);
+        }
+
+        /* Left + right walls */
+        #left-wall {
+            transform: rotateY(90deg) translateZ(400px);
+        }
+
+        #right-wall {
+            transform: rotateY(-90deg) translateZ(400px);
+        }
+
+        /* Front wall (where demon appears) */
+        #front-wall {
+            transform: translateZ(-800px);
+        }
+
         /* TITLE + BEDROOM SCREENS */
         #title-screen, #bedroom {
+            position: absolute;
             width: 100%;
             height: 100%;
             text-align: center;
             padding-top: 10%;
+            background: rgba(0,0,0,0.8);
         }
 
         /* BIG PLAY BUTTON */
@@ -44,13 +103,29 @@
             cursor: pointer;
         }
 
+        /* HAND ANIMATION */
+        #hand-anim {
+            display: none;
+            position: absolute;
+            bottom: -200px;
+            right: 20px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            transition: bottom 0.4s ease;
+        }
+
+        .hand-up {
+            bottom: 20px;
+        }
+
         /* DEMON EYES */
         #eyes {
             display: none;
             position: absolute;
             top: 40%;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateZ(-700px);
             font-size: 80px;
             color: red;
             letter-spacing: 40px;
@@ -58,9 +133,8 @@
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
 
-        /* HEAD TILT EFFECT */
         .tilt {
-            transform: translateX(-50%) rotate(20deg);
+            transform: translateX(-50%) translateZ(-700px) rotate(20deg);
         }
 
         /* SCREEN SHAKE */
@@ -76,16 +150,6 @@
             100% { transform: translate(0, 0); }
         }
 
-        /* HAND CLICK ANIMATION */
-        .hand-flash {
-            animation: flash 0.2s;
-        }
-
-        @keyframes flash {
-            0% { background: white; }
-            100% { background: none; }
-        }
-
         .hint {
             opacity: 0.6;
             font-size: 14px;
@@ -94,6 +158,21 @@
     </style>
 </head>
 <body>
+
+    <!-- 3D WORLD -->
+    <div id="world">
+        <div id="camera">
+
+            <div id="floor" class="wall"></div>
+            <div id="ceiling" class="wall"></div>
+            <div id="left-wall" class="wall"></div>
+            <div id="right-wall" class="wall"></div>
+            <div id="front-wall" class="wall"></div>
+
+            <div id="eyes">● ●</div>
+
+        </div>
+    </div>
 
     <!-- TITLE SCREEN -->
     <div id="title-screen">
@@ -115,19 +194,26 @@
         <p id="hint" class="hint">Press E to toggle the light switch.</p>
     </div>
 
-    <!-- DEMON EYES -->
-    <div id="eyes">● ●</div>
+    <!-- HAND ANIMATION -->
+    <div id="hand-anim"></div>
 
     <script>
 
         let chosenHand = null;
         let inBedroom = false;
         let lightTried = false;
+        let zPos = 0;
 
         /* HAND SELECTION */
         document.querySelectorAll(".hand").forEach(btn => {
             btn.addEventListener("click", () => {
                 chosenHand = btn.dataset.hand;
+
+                const hand = document.getElementById("hand-anim");
+                if (chosenHand === "black") hand.style.background = "#3b2f2f";
+                if (chosenHand === "tan") hand.style.background = "#d2a679";
+                if (chosenHand === "white") hand.style.background = "#f2d6c9";
+
                 document.getElementById("play-btn").style.display = "block";
             });
         });
@@ -142,17 +228,28 @@
                 "STEVIE: Mother? Father? I had a nightmare...";
         });
 
+        /* MOVEMENT (W KEY) */
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "w" || e.key === "W") {
+                zPos -= 20;
+                document.getElementById("camera").style.transform =
+                    `translateZ(${zPos}px)`;
+            }
+        });
+
         /* LIGHT SWITCH EVENT */
         document.addEventListener("keydown", (e) => {
             if (!inBedroom) return;
 
             if (e.key === "e" || e.key === "E") {
 
-                // HAND FLASH ANIMATION
-                document.body.classList.add("hand-flash");
+                const hand = document.getElementById("hand-anim");
+                hand.style.display = "block";
+                hand.classList.add("hand-up");
+
                 setTimeout(() => {
-                    document.body.classList.remove("hand-flash");
-                }, 200);
+                    hand.classList.remove("hand-up");
+                }, 400);
 
                 if (!lightTried) {
                     lightTried = true;
@@ -160,7 +257,6 @@
                     document.getElementById("dialogue").innerText =
                         "STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.";
 
-                    // Remove hint
                     document.getElementById("hint").style.display = "none";
 
                     showChoices();
@@ -190,19 +286,15 @@
         function jumpscare() {
             const eyes = document.getElementById("eyes");
 
-            // Show demon eyes
             eyes.style.display = "block";
             eyes.style.opacity = "1";
 
-            // Screen shake
             document.body.classList.add("shake");
 
-            // Head tilt
             setTimeout(() => {
                 eyes.classList.add("tilt");
             }, 500);
 
-            // Fade to black
             setTimeout(() => {
                 document.body.style.backgroundColor = "black";
                 document.getElementById("bedroom").style.display = "none";
