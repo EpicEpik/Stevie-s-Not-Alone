@@ -1,1 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Stevie's Not Alone</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+    <div id="title-screen">
+        <h1>Stevie's Not Alone</h1>
+
+        <p>Select your hand:</p>
+        <button class="hand" data-hand="black">Black Hand</button>
+        <button class="hand" data-hand="tan">Tan Hand</button>
+        <button class="hand" data-hand="white">White Hand</button>
+
+        <button id="play-btn" style="display:none;">Play</button>
+    </div>
+
+    <div id="bedroom" style="display:none;">
+        <p id="dialogue"></p>
+        <p>Press E to toggle the light switch.</p>
+    </div>
+
+    <img id="jumpscare" src="https://i.imgur.com/2yaf2wb.png">
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+let chosenHand = null;
+let inBedroom = false;
+let lightTried = false;
+
+// Hand selection
+document.querySelectorAll(".hand").forEach(btn => {
+    btn.addEventListener("click", () => {
+        chosenHand = btn.dataset.hand;
+        document.getElementById("play-btn").style.display = "block";
+    });
+});
+
+// Start game
+document.getElementById("play-btn").addEventListener("click", () => {
+    document.getElementById("title-screen").style.display = "none";
+    document.getElementById("bedroom").style.display = "block";
+    inBedroom = true;
+
+    document.getElementById("dialogue").innerText =
+        "STEVIE: Mother? Father? I had a nightmare...";
+});
+
+// Light switch logic
+document.addEventListener("keydown", (e) => {
+    if (!inBedroom) return;
+
+    if (e.key === "e" || e.key === "E") {
+        if (!lightTried) {
+            lightTried = true;
+            document.getElementById("dialogue").innerText =
+                "STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.";
+
+            showChoices();
+        }
+    }
+});
+
+// Show choice buttons
+function showChoices() {
+    const choice1 = document.createElement("button");
+    const choice2 = document.createElement("button");
+
+    choice1.innerText = "Fix generators";
+    choice2.innerText = "Go back to sleep";
+
+    choice1.onclick = () => alert("Generator path coming soon!");
+    choice2.onclick = () => jumpscare();
+
+    document.getElementById("bedroom").appendChild(choice1);
+    document.getElementById("bedroom").appendChild(choice2);
+}
+
+// Jumpscare
+function jumpscare() {
+    document.getElementById("jumpscare").style.display = "block";
+    new Audio("https://www.myinstants.com/media/sounds/scream.mp3").play();
+}
