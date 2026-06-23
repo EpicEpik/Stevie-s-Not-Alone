@@ -11,17 +11,25 @@
             height: 100%;
             width: 100%;
             overflow: hidden;
-            background: black;
+            background: #111;
             font-family: Arial, sans-serif;
             color: white;
         }
 
-        /* CENTER EVERYTHING */
+        /* TITLE + BEDROOM SCREENS */
         #title-screen, #bedroom {
             width: 100%;
             height: 100%;
             text-align: center;
             padding-top: 10%;
+        }
+
+        /* BIG PLAY BUTTON */
+        #play-btn {
+            padding: 20px 40px;
+            font-size: 28px;
+            margin-top: 20px;
+            cursor: pointer;
         }
 
         /* HAND BUTTONS */
@@ -30,25 +38,29 @@
         }
 
         .hand {
-            padding: 10px 20px;
+            padding: 12px 25px;
             margin: 5px;
-            font-size: 18px;
+            font-size: 20px;
+            cursor: pointer;
         }
 
-        /* DEMON */
-        #demon {
+        /* DEMON EYES */
+        #eyes {
             display: none;
             position: absolute;
-            width: 60%;
-            left: 20%;
-            top: 5%;
-            filter: brightness(0.3) contrast(2) blur(1px);
-            transition: transform 0.5s ease;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 80px;
+            color: red;
+            letter-spacing: 40px;
+            opacity: 0;
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
 
-        /* HEAD TILT */
+        /* HEAD TILT EFFECT */
         .tilt {
-            transform: rotate(25deg);
+            transform: translateX(-50%) rotate(20deg);
         }
 
         /* SCREEN SHAKE */
@@ -64,7 +76,16 @@
             100% { transform: translate(0, 0); }
         }
 
-        /* HINT TEXT */
+        /* HAND CLICK ANIMATION */
+        .hand-flash {
+            animation: flash 0.2s;
+        }
+
+        @keyframes flash {
+            0% { background: white; }
+            100% { background: none; }
+        }
+
         .hint {
             opacity: 0.6;
             font-size: 14px;
@@ -91,11 +112,11 @@
     <!-- BEDROOM SCENE -->
     <div id="bedroom" style="display:none;">
         <p id="dialogue"></p>
-        <p class="hint">Press E to toggle the light switch.</p>
+        <p id="hint" class="hint">Press E to toggle the light switch.</p>
     </div>
 
-    <!-- DEMON IMAGE -->
-    <img id="demon" src="demon.png">
+    <!-- DEMON EYES -->
+    <div id="eyes">● ●</div>
 
     <script>
 
@@ -103,7 +124,7 @@
         let inBedroom = false;
         let lightTried = false;
 
-        // HAND SELECTION
+        /* HAND SELECTION */
         document.querySelectorAll(".hand").forEach(btn => {
             btn.addEventListener("click", () => {
                 chosenHand = btn.dataset.hand;
@@ -111,7 +132,7 @@
             });
         });
 
-        // START GAME
+        /* START GAME */
         document.getElementById("play-btn").addEventListener("click", () => {
             document.getElementById("title-screen").style.display = "none";
             document.getElementById("bedroom").style.display = "block";
@@ -121,29 +142,42 @@
                 "STEVIE: Mother? Father? I had a nightmare...";
         });
 
-        // LIGHT SWITCH EVENT
+        /* LIGHT SWITCH EVENT */
         document.addEventListener("keydown", (e) => {
             if (!inBedroom) return;
 
             if (e.key === "e" || e.key === "E") {
+
+                // HAND FLASH ANIMATION
+                document.body.classList.add("hand-flash");
+                setTimeout(() => {
+                    document.body.classList.remove("hand-flash");
+                }, 200);
+
                 if (!lightTried) {
                     lightTried = true;
 
                     document.getElementById("dialogue").innerText =
                         "STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.";
 
+                    // Remove hint
+                    document.getElementById("hint").style.display = "none";
+
                     showChoices();
                 }
             }
         });
 
-        // CHOICE BUTTONS
+        /* CHOICE BUTTONS */
         function showChoices() {
             const choice1 = document.createElement("button");
             const choice2 = document.createElement("button");
 
             choice1.innerText = "Fix generators";
             choice2.innerText = "Go back to sleep";
+
+            choice1.style.margin = "10px";
+            choice2.style.margin = "10px";
 
             choice1.onclick = () => alert("Generator path coming soon!");
             choice2.onclick = () => jumpscare();
@@ -152,17 +186,23 @@
             document.getElementById("bedroom").appendChild(choice2);
         }
 
-        // DEMON JUMPSCARE
+        /* DEMON JUMPSCARE */
         function jumpscare() {
-            const demon = document.getElementById("demon");
+            const eyes = document.getElementById("eyes");
 
-            demon.style.display = "block";
+            // Show demon eyes
+            eyes.style.display = "block";
+            eyes.style.opacity = "1";
+
+            // Screen shake
             document.body.classList.add("shake");
 
+            // Head tilt
             setTimeout(() => {
-                demon.classList.add("tilt");
+                eyes.classList.add("tilt");
             }, 500);
 
+            // Fade to black
             setTimeout(() => {
                 document.body.style.backgroundColor = "black";
                 document.getElementById("bedroom").style.display = "none";
