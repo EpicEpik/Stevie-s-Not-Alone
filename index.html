@@ -1,311 +1,691 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Stevie's Not Alone</title>
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            background: #000;
-            font-family: Arial, sans-serif;
-            color: white;
-        }
+<meta charset="UTF-8">
+<title>Stevie’s Not Alone</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+  }
 
-        #game {
-            width: 100vw;
-            height: 100vh;
-            background: #1a1208; /* dark brown room */
-            position: relative;
-        }
+  #game {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    perspective: 1200px;
+    background: #050505;
+  }
 
-        /* TITLE + BEDROOM */
-        #title-screen, #bedroom {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
+  #ui-dialog {
+    position: absolute;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 70%;
+    padding: 12px 16px;
+    background: rgba(20,20,20,0.7);
+    border-radius: 8px;
+    font-size: 16px;
+  }
 
-        #play-btn {
-            padding: 20px 40px;
-            font-size: 28px;
-            margin-top: 20px;
-            cursor: pointer;
-        }
+  #hint {
+    position: absolute;
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 6px;
+    font-size: 14px;
+  }
 
-        #hand-options {
-            margin: 20px;
-        }
+  #room {
+    position: absolute;
+    width: 800px;
+    height: 500px;
+    top: 50%;
+    left: 50%;
+    transform-style: preserve-3d;
+    transform: translate(-50%, -50%) rotateX(10deg);
+  }
 
-        .hand {
-            padding: 12px 25px;
-            margin: 5px;
-            font-size: 20px;
-            cursor: pointer;
-        }
+  .wall, .floor, .ceiling {
+    position: absolute;
+    background: #222;
+  }
 
-        .hint {
-            opacity: 0.6;
-            font-size: 14px;
-        }
+  .floor {
+    width: 800px;
+    height: 500px;
+    background: #111;
+    transform: rotateX(90deg) translateZ(-250px);
+    transform-origin: top;
+  }
 
-        /* SWITCH ON WALL */
-        #switch {
-            position: absolute;
-            top: 40%;
-            left: 15%;
-            width: 40px;
-            height: 80px;
-            background: #777;
-            border: 3px solid #222;
-            border-radius: 5px;
-        }
+  .ceiling {
+    width: 800px;
+    height: 500px;
+    background: #080808;
+    transform: rotateX(-90deg) translateZ(-250px);
+    transform-origin: bottom;
+  }
 
-        /* HAND ANIMATION */
-        #hand-anim {
-            display: none;
-            position: absolute;
-            bottom: 10%;
-            right: -200px;
-            width: 160px;
-            height: 160px;
-            border-radius: 50%;
-            transition: right 0.4s ease;
-        }
+  .wall.front {
+    width: 800px;
+    height: 500px;
+    transform: translateZ(250px);
+    background: #1b1b1b;
+  }
 
-        .hand-reach {
-            right: 25%;
-        }
+  .wall.left {
+    width: 500px;
+    height: 500px;
+    transform: rotateY(90deg) translateZ(-400px);
+    transform-origin: left;
+    background: #1a1a1a;
+  }
 
-        /* DEMON BUILT FROM SHAPES */
-        #demon {
-            display: none;
-            position: absolute;
-            top: 5%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 420px;
-        }
+  .wall.right {
+    width: 500px;
+    height: 500px;
+    transform: rotateY(-90deg) translateZ(-400px);
+    transform-origin: right;
+    background: #1a1a1a;
+  }
 
-        /* Head */
-        #demon-head {
-            width: 160px;
-            height: 180px;
-            background: #000;
-            border-radius: 50% 50% 40% 40%;
-            margin: 0 auto;
-            position: relative;
-        }
+  .door {
+    position: absolute;
+    width: 120px;
+    height: 220px;
+    background: #3b2b1a;
+    border: 3px solid #2a1a0a;
+    box-shadow: 0 0 10px rgba(0,0,0,0.8);
+  }
 
-        /* Teeth */
-        #demon-teeth {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 40px;
-            background: repeating-linear-gradient(
-                to right,
-                white 0px,
-                white 10px,
-                black 10px,
-                black 20px
-            );
-            border-radius: 0 0 20px 20px;
-        }
+  #frontDoor {
+    left: 340px;
+    bottom: 0;
+  }
 
-        /* Body */
-        #demon-body {
-            width: 120px;
-            height: 260px;
-            background: #000;
-            border-radius: 60px;
-            margin: 0 auto;
-            margin-top: -10px;
-        }
+  #bathroomDoor {
+    left: 40px;
+    bottom: 0;
+  }
 
-        /* EYES */
-        #eyes {
-            position: absolute;
-            top: 22%;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 80px;
-            color: red;
-            letter-spacing: 40px;
-            opacity: 0;
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
+  #sideDoorLabel {
+    position: absolute;
+    left: 40px;
+    bottom: 230px;
+    font-size: 12px;
+  }
 
-        .eyes-visible {
-            opacity: 1;
-        }
+  #frontDoorLabel {
+    position: absolute;
+    left: 340px;
+    bottom: 230px;
+    font-size: 12px;
+  }
 
-        .tilt {
-            transform: translateX(-50%) rotate(20deg);
-        }
+  .bed {
+    position: absolute;
+    width: 200px;
+    height: 100px;
+    background: #333;
+    border-radius: 4px;
+    bottom: 40px;
+    right: 60px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.7);
+  }
 
-        /* SCREEN SHAKE */
-        .shake {
-            animation: shake 0.5s;
-        }
+  .bed::before {
+    content: "";
+    position: absolute;
+    width: 200px;
+    height: 40px;
+    background: #555;
+    top: -40px;
+    border-radius: 4px 4px 0 0;
+  }
 
-        @keyframes shake {
-            0% { transform: translate(0, 0); }
-            25% { transform: translate(10px, -10px); }
-            50% { transform: translate(-10px, 10px); }
-            75% { transform: translate(10px, 10px); }
-            100% { transform: translate(0, 0); }
-        }
-    </style>
+  /* Light switch (front wall, next to door) */
+  .switch-plate {
+    position: absolute;
+    width: 40px;
+    height: 60px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    box-shadow: 0 0 6px rgba(0,0,0,0.7);
+    left: 290px;
+    top: 180px;
+  }
+
+  .switch-plate::before,
+  .switch-plate::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #ccc;
+    border-radius: 50%;
+  }
+
+  .switch-plate::before { top: 6px; left: 17px; }
+  .switch-plate::after { bottom: 6px; left: 17px; }
+
+  .switch-toggle {
+    position: absolute;
+    width: 16px;
+    height: 30px;
+    background: #e0e0e0;
+    left: 12px;
+    top: 15px;
+    border-radius: 3px;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.4);
+    transform-origin: bottom;
+    transform: rotateX(10deg);
+  }
+
+  .switch-toggle.on {
+    transform: rotateX(-20deg);
+  }
+
+  /* Hand (3D-ish) */
+  #hand {
+    position: absolute;
+    width: 60px;
+    height: 120px;
+    background: #f0c8a0; /* default skin tone */
+    border-radius: 30px;
+    left: 50%;
+    bottom: 40px;
+    transform: translateX(-50%) translateZ(80px) rotateX(-20deg);
+    transform-origin: bottom;
+    box-shadow: 0 0 12px rgba(0,0,0,0.8);
+  }
+
+  #hand::before {
+    content: "";
+    position: absolute;
+    width: 50px;
+    height: 40px;
+    background: #f0c8a0;
+    border-radius: 25px;
+    top: -20px;
+    left: 5px;
+  }
+
+  #hand.fingered::after {
+    content: "";
+    position: absolute;
+    width: 50px;
+    height: 40px;
+    background: linear-gradient(to right,
+      #f0c8a0 0%,
+      #f0c8a0 25%,
+      #f0c8a0 50%,
+      #f0c8a0 75%,
+      #f0c8a0 100%);
+    border-radius: 20px;
+    bottom: 0;
+    left: 5px;
+  }
+
+  /* Demon (3D) */
+  #demon {
+    position: absolute;
+    width: 60px;
+    height: 200px;
+    background: #000;
+    border-radius: 30px;
+    box-shadow: 0 0 25px rgba(255,0,0,0.6);
+    transform-style: preserve-3d;
+    display: none;
+  }
+
+  #demon-head {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    background: #000;
+    border-radius: 50%;
+    top: -60px;
+    left: -5px;
+  }
+
+  .eye {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: red;
+    border-radius: 50%;
+    box-shadow: 0 0 10px red;
+    top: 20px;
+  }
+
+  .eye.left { left: 15px; }
+  .eye.right { right: 15px; }
+
+  .teeth {
+    position: absolute;
+    width: 40px;
+    height: 12px;
+    background: #eee;
+    border-radius: 0 0 8px 8px;
+    bottom: 10px;
+    left: 15px;
+  }
+
+  /* Dining table (kitchen, for key) */
+  #diningTable {
+    position: absolute;
+    width: 160px;
+    height: 80px;
+    background: #3b3b3b;
+    border-radius: 4px;
+    bottom: 120px;
+    left: 120px;
+    display: none; /* only visible in kitchen scene */
+  }
+
+  #key {
+    position: absolute;
+    width: 20px;
+    height: 8px;
+    background: gold;
+    border-radius: 4px;
+    bottom: 110px;
+    left: 150px;
+    display: none;
+    box-shadow: 0 0 8px rgba(255,215,0,0.8);
+  }
+
+  /* Simple “scene” overlay to fake moving around house */
+  #sceneLabel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 14px;
+    opacity: 0.7;
+  }
+
+  /* Interaction hotspot */
+  .hotspot {
+    position: absolute;
+    border: 2px dashed rgba(255,255,255,0.2);
+    cursor: pointer;
+  }
+
+  #hotspotFrontDoor {
+    width: 120px;
+    height: 220px;
+    left: 340px;
+    bottom: 0;
+  }
+
+  #hotspotBathroomDoor {
+    width: 120px;
+    height: 220px;
+    left: 40px;
+    bottom: 0;
+  }
+
+  #hotspotSwitch {
+    width: 40px;
+    height: 60px;
+    left: 290px;
+    top: 180px;
+  }
+
+  #hotspotBed {
+    width: 200px;
+    height: 140px;
+    right: 60px;
+    bottom: 40px;
+  }
+
+  #hotspotParentsDoor,
+  #hotspotBasementDoor {
+    position: absolute;
+    width: 120px;
+    height: 220px;
+    border: 2px dashed rgba(255,255,255,0.2);
+    cursor: pointer;
+    display: none;
+  }
+
+  #hotspotParentsDoor { top: 140px; left: 100px; }
+  #hotspotBasementDoor { bottom: 40px; right: 100px; }
+
+  #hotspotKey {
+    position: absolute;
+    width: 40px;
+    height: 30px;
+    left: 140px;
+    bottom: 100px;
+    border: 2px dashed rgba(255,255,255,0.3);
+    cursor: pointer;
+    display: none;
+  }
+</style>
 </head>
 <body>
+<div id="game">
+  <div id="sceneLabel">Scene: Stevie’s room</div>
+  <div id="ui-dialog">STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.</div>
+  <div id="hint">Press E to interact. Press SHIFT to sprint.</div>
 
-    <div id="game">
+  <div id="room">
+    <div class="floor"></div>
+    <div class="ceiling"></div>
+    <div class="wall front">
+      <div id="frontDoor" class="door"></div>
+      <div id="frontDoorLabel">Front door</div>
 
-        <!-- TITLE SCREEN -->
-        <div id="title-screen">
-            <h1>Stevie's Not Alone</h1>
+      <div class="switch-plate" id="switchPlate">
+        <div class="switch-toggle" id="switchToggle"></div>
+      </div>
 
-            <p>Select your hand:</p>
-            <div id="hand-options">
-                <button class="hand" data-hand="black">Black Hand</button>
-                <button class="hand" data-hand="tan">Tan Hand</button>
-                <button class="hand" data-hand="white">White Hand</button>
-            </div>
+      <div id="bathroomDoor" class="door"></div>
+      <div id="sideDoorLabel">Bathroom</div>
+    </div>
+    <div class="wall left"></div>
+    <div class="wall right"></div>
 
-            <button id="play-btn" style="display:none;">Play</button>
-        </div>
+    <div class="bed"></div>
 
-        <!-- BEDROOM -->
-        <div id="bedroom" style="display:none;">
-            <p id="dialogue"></p>
-            <p id="hint" class="hint">Press E to toggle the light switch.</p>
-        </div>
+    <!-- Hotspots -->
+    <div id="hotspotFrontDoor" class="hotspot"></div>
+    <div id="hotspotBathroomDoor" class="hotspot"></div>
+    <div id="hotspotSwitch" class="hotspot"></div>
+    <div id="hotspotBed" class="hotspot"></div>
 
-        <!-- SWITCH -->
-        <div id="switch"></div>
+    <!-- Parents & basement hotspots (used in other scenes) -->
+    <div id="hotspotParentsDoor"></div>
+    <div id="hotspotBasementDoor"></div>
 
-        <!-- HAND -->
-        <div id="hand-anim"></div>
+    <!-- Dining table + key (kitchen scene) -->
+    <div id="diningTable"></div>
+    <div id="key"></div>
+    <div id="hotspotKey"></div>
 
-        <!-- DEMON -->
-        <div id="demon">
-            <div id="demon-head">
-                <div id="demon-teeth"></div>
-            </div>
-            <div id="demon-body"></div>
-        </div>
-
-        <!-- DEMON EYES -->
-        <div id="eyes">● ●</div>
-
+    <!-- Demon -->
+    <div id="demon">
+      <div id="demon-head">
+        <div class="eye left"></div>
+        <div class="eye right"></div>
+        <div class="teeth"></div>
+      </div>
     </div>
 
-    <script>
-        let chosenHand = null;
-        let inBedroom = false;
-        let lightTried = false;
+    <!-- Hand -->
+    <div id="hand" class="fingered"></div>
+  </div>
+</div>
 
-        // HAND SELECTION
-        document.querySelectorAll(".hand").forEach(btn => {
-            btn.addEventListener("click", () => {
-                chosenHand = btn.dataset.hand;
+<script>
+  const dialog = document.getElementById('ui-dialog');
+  const hint = document.getElementById('hint');
+  const sceneLabel = document.getElementById('sceneLabel');
+  const switchToggle = document.getElementById('switchToggle');
+  const hand = document.getElementById('hand');
+  const demon = document.getElementById('demon');
+  const diningTable = document.getElementById('diningTable');
+  const key = document.getElementById('key');
+  const hotspotKey = document.getElementById('hotspotKey');
+  const hotspotFrontDoor = document.getElementById('hotspotFrontDoor');
+  const hotspotBathroomDoor = document.getElementById('hotspotBathroomDoor');
+  const hotspotParentsDoor = document.getElementById('hotspotParentsDoor');
+  const hotspotBasementDoor = document.getElementById('hotspotBasementDoor');
 
-                const hand = document.getElementById("hand-anim");
-                if (chosenHand === "black") hand.style.background = "#3b2f2f";
-                if (chosenHand === "tan") hand.style.background = "#d2a679";
-                if (chosenHand === "white") hand.style.background = "#f2d6c9";
+  let currentScene = 'bedroom'; // bedroom, hallway, kitchen, living, upstairs, downstairs
+  let powerOn = false;
+  let hasKey = false;
+  let demonActive = false;
+  let demonVisible = false;
+  let demonX = 0;
+  let demonY = 0;
+  let demonTargetScene = null;
+  let sprinting = false;
 
-                document.getElementById("play-btn").style.display = "block";
-            });
-        });
+  // Simple “player” state
+  let playerSpeed = 1;
+  let baseSpeed = 1;
+  let sprintSpeed = 2;
 
-        // START GAME
-        document.getElementById("play-btn").addEventListener("click", () => {
-            document.getElementById("title-screen").style.display = "none";
-            document.getElementById("bedroom").style.display = "block";
-            inBedroom = true;
+  // Show initial popup for sprint
+  setTimeout(() => {
+    hint.textContent = 'Press E to interact. Press SHIFT to sprint.';
+  }, 200);
 
-            document.getElementById("dialogue").innerText =
-                "STEVIE: Mother? Father? I had a nightmare...";
-        });
+  // Hand animation toward switch (3D-ish)
+  function animateHandToSwitch() {
+    hand.style.transition = 'transform 0.8s ease-out';
+    hand.style.transform =
+      'translateX(-50%) translateZ(200px) translateY(-40px) rotateX(-40deg)';
+    setTimeout(() => {
+      switchToggle.classList.add('on');
+      powerOn = true;
+      dialog.textContent = 'STEVIE: That should fix the generators... I guess.';
+      setTimeout(() => {
+        dialog.textContent = 'STEVIE: I should probably check the rest of the house.';
+      }, 1500);
+    }, 700);
+  }
 
-        // LIGHT SWITCH EVENT
-        document.addEventListener("keydown", (e) => {
-            if (!inBedroom) return;
+  // Demon random spawn system
+  const allowedScenes = ['hallway', 'kitchen', 'living', 'upstairs', 'downstairs', 'bathroom', 'bedroom'];
 
-            if (e.key === "e" || e.key === "E") {
+  function randomAllowedScene() {
+    // Parents room & basement excluded
+    const pool = allowedScenes.slice();
+    // Bedroom only allowed after first exit; we’ll allow it once demonActive is true
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
 
-                const hand = document.getElementById("hand-anim");
-                hand.style.display = "block";
-                hand.classList.add("hand-reach");
+  function spawnDemonRandom() {
+    if (!demonActive) return;
+    demonTargetScene = randomAllowedScene();
+    demonVisible = true;
+    demon.style.display = 'block';
 
-                setTimeout(() => {
-                    hand.classList.remove("hand-reach");
-                }, 400);
+    // Position demon differently depending on scene
+    let x = 0, y = 0;
+    switch (demonTargetScene) {
+      case 'hallway':
+        x = 380; y = 80; break;
+      case 'kitchen':
+        x = 140; y = 80; break;
+      case 'living':
+        x = 520; y = 80; break;
+      case 'upstairs':
+        x = 260; y = 60; break;
+      case 'downstairs':
+        x = 260; y = 120; break;
+      case 'bathroom':
+        x = 80; y = 80; break;
+      case 'bedroom':
+        x = 200; y = 80; break;
+      default:
+        x = 380; y = 80;
+    }
+    demonX = x;
+    demonY = y;
+    demon.style.left = demonX + 'px';
+    demon.style.bottom = demonY + 'px';
+  }
 
-                if (!lightTried) {
-                    lightTried = true;
+  // Demon moves slowly toward center of room
+  function updateDemon() {
+    if (!demonVisible) return;
+    // Very slow movement
+    demonY += 0.05;
+    demon.style.bottom = demonY + 'px';
+  }
 
-                    document.getElementById("dialogue").innerText =
-                        "STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.";
+  setInterval(updateDemon, 50);
 
-                    document.getElementById("hint").style.display = "none";
+  // Teleport demon when “looked at” (we’ll simulate with pressing L)
+  document.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'l') {
+      if (demonVisible) {
+        demonVisible = false;
+        demon.style.display = 'none';
+        // Teleport to new random scene
+        setTimeout(spawnDemonRandom, 400);
+        dialog.textContent = 'STEVIE: ...Did he just move?';
+      }
+    }
+  });
 
-                    showChoices();
-                }
-            }
-        });
+  // Scene switching (simplified)
+  function goToScene(scene) {
+    currentScene = scene;
+    sceneLabel.textContent = 'Scene: ' + (
+      scene === 'bedroom' ? "Stevie’s room" :
+      scene === 'hallway' ? 'Hallway' :
+      scene === 'kitchen' ? 'Kitchen' :
+      scene === 'living' ? 'Living room' :
+      scene === 'upstairs' ? 'Upstairs landing' :
+      scene === 'downstairs' ? 'Downstairs landing' :
+      scene === 'bathroom' ? 'Bathroom' : scene
+    );
 
-        // CHOICE BUTTONS
-        function showChoices() {
-            const choice1 = document.createElement("button");
-            const choice2 = document.createElement("button");
+    // Reset room visuals
+    diningTable.style.display = 'none';
+    key.style.display = 'none';
+    hotspotKey.style.display = 'none';
+    hotspotParentsDoor.style.display = 'none';
+    hotspotBasementDoor.style.display = 'none';
 
-            choice1.innerText = "Fix generators";
-            choice2.innerText = "Go back to sleep";
+    if (scene === 'bedroom') {
+      dialog.textContent = 'STEVIE: My room... I don’t feel safe anymore.';
+    } else if (scene === 'hallway') {
+      dialog.textContent = 'STEVIE: The hallway feels wrong tonight.';
+    } else if (scene === 'kitchen') {
+      dialog.textContent = 'STEVIE: The kitchen... maybe there\'s something useful here.';
+      diningTable.style.display = 'block';
+      if (!hasKey) {
+        key.style.display = 'block';
+        hotspotKey.style.display = 'block';
+      }
+    } else if (scene === 'living') {
+      dialog.textContent = 'STEVIE: The living room is too quiet.';
+    } else if (scene === 'upstairs') {
+      dialog.textContent = 'STEVIE: Upstairs landing... Parents\' room is up here.';
+      hotspotParentsDoor.style.display = 'block';
+    } else if (scene === 'downstairs') {
+      dialog.textContent = 'STEVIE: Downstairs... The basement door is here.';
+      hotspotBasementDoor.style.display = 'block';
+    } else if (scene === 'bathroom') {
+      dialog.textContent = 'STEVIE: Finally. The bathroom.';
+    }
 
-            choice1.style.margin = "10px";
-            choice2.style.margin = "10px";
+    // Demon can spawn in any allowed scene randomly
+    if (demonActive && !demonVisible) {
+      spawnDemonRandom();
+    }
+  }
 
-            choice1.onclick = () => alert("Generator path coming soon!");
-            choice2.onclick = () => jumpscare();
+  // Interactions
+  function interactFrontDoor() {
+    dialog.textContent = "STEVIE: It's locked. Obviously. It's 1AM for god's sake!!";
+  }
 
-            document.getElementById("bedroom").appendChild(choice1);
-            document.getElementById("bedroom").appendChild(choice2);
+  function interactBathroomDoor() {
+    if (!hasKey) {
+      dialog.textContent = "STEVIE: Why the hell would they lock the bathroom from outside!? I need a key.";
+    } else {
+      dialog.textContent = "STEVIE: Got it. Bathroom's open.";
+      goToScene('bathroom');
+    }
+  }
+
+  function interactParentsDoor() {
+    dialog.textContent = "STEVIE: No WAY am I going in there!! Mother and Father would KILL ME!";
+  }
+
+  function interactBasementDoor() {
+    dialog.textContent = "STEVIE: No! It's too dark and scary...";
+  }
+
+  function interactKey() {
+    hasKey = true;
+    key.style.display = 'none';
+    hotspotKey.style.display = 'none';
+    dialog.textContent = "STEVIE: A key...? Under the dining table?";
+  }
+
+  function interactSwitch() {
+    if (!powerOn) {
+      animateHandToSwitch();
+    } else {
+      dialog.textContent = "STEVIE: Already flipped it.";
+    }
+  }
+
+  function interactBed() {
+    dialog.textContent = "STEVIE: I can't sleep. Not tonight.";
+  }
+
+  // Click hotspots with mouse (for fun)
+  hotspotFrontDoor.addEventListener('click', interactFrontDoor);
+  hotspotBathroomDoor.addEventListener('click', interactBathroomDoor);
+  hotspotParentsDoor.addEventListener('click', interactParentsDoor);
+  hotspotBasementDoor.addEventListener('click', interactBasementDoor);
+  hotspotKey.addEventListener('click', interactKey);
+  document.getElementById('hotspotSwitch').addEventListener('click', interactSwitch);
+  document.getElementById('hotspotBed').addEventListener('click', interactBed);
+
+  // Keyboard interaction (E) + simple scene cycling
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Shift') {
+      sprinting = true;
+      playerSpeed = sprintSpeed;
+    }
+    if (e.key.toLowerCase() === 'e') {
+      // Context-sensitive interaction
+      if (currentScene === 'bedroom') {
+        // First time leaving room activates demon
+        if (!demonActive && powerOn) {
+          demonActive = true;
+          dialog.textContent = 'STEVIE: I should check the hallway...';
+          goToScene('hallway');
+        } else {
+          dialog.textContent = 'STEVIE: I should probably leave my room.';
         }
+      } else if (currentScene === 'hallway') {
+        // Move to upstairs or downstairs randomly
+        if (Math.random() < 0.5) goToScene('upstairs');
+        else goToScene('downstairs');
+      } else if (currentScene === 'upstairs') {
+        // Try parents door
+        interactParentsDoor();
+      } else if (currentScene === 'downstairs') {
+        // Try basement door or go to kitchen/living
+        if (Math.random() < 0.4) interactBasementDoor();
+        else if (Math.random() < 0.7) goToScene('kitchen');
+        else goToScene('living');
+      } else if (currentScene === 'kitchen') {
+        if (!hasKey) interactKey();
+        else dialog.textContent = 'STEVIE: Nothing else here.';
+      } else if (currentScene === 'living') {
+        dialog.textContent = 'STEVIE: Just the living room...';
+      } else if (currentScene === 'bathroom') {
+        dialog.textContent = 'STEVIE: I don\'t want to be here any longer.';
+      }
+    }
+  });
 
-        // DEMON JUMPSCARE
-        function jumpscare() {
-            const demon = document.getElementById("demon");
-            const eyes = document.getElementById("eyes");
-
-            demon.style.display = "block";
-            eyes.classList.add("eyes-visible");
-
-            document.body.classList.add("shake");
-
-            setTimeout(() => {
-                demon.classList.add("tilt");
-                eyes.classList.add("tilt");
-            }, 500);
-
-            setTimeout(() => {
-                document.body.style.backgroundColor = "black";
-                document.getElementById("bedroom").style.display = "none";
-            }, 1500);
-        }
-    </script>
-
+  document.addEventListener('keyup', (e) => {
+    if (e.key === 'Shift') {
+      sprinting = false;
+      playerSpeed = baseSpeed;
+    }
+  });
+</script>
 </body>
 </html>
