@@ -1,5 +1,3 @@
-<!-- version 7 -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,20 +11,35 @@
     color: #fff;
     font-family: Arial, sans-serif;
   }
+
+  /* PLAY OVERLAY */
   #overlay {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background: rgba(0,0,0,0.8);
     z-index: 10;
-    cursor: pointer;
   }
-  #overlay h1 { margin-bottom: 10px; }
-  #overlay p { font-size: 14px; opacity: 0.8; }
+
+  #playButton {
+    font-size: 40px;
+    padding: 25px 50px;
+    border: none;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #000;
+    cursor: pointer;
+    margin-bottom: 20px;
+  }
+
+  #overlay p {
+    font-size: 16px;
+    opacity: 0.8;
+  }
 
   #ui-dialog {
     position: fixed;
@@ -62,32 +75,40 @@
     z-index: 5;
   }
 
+  /* BIGGER SKIN TONE BUTTONS */
   #skinSelector {
     position: fixed;
     top: 10px;
     right: 10px;
     z-index: 5;
     background: rgba(0,0,0,0.6);
-    padding: 6px 8px;
+    padding: 10px 12px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: 14px;
   }
+
   #skinSelector button {
-    margin: 2px;
-    padding: 4px 6px;
-    font-size: 11px;
+    margin: 4px;
+    padding: 12px 16px;
+    font-size: 16px;
     cursor: pointer;
+    border-radius: 6px;
+    border: none;
   }
 </style>
 </head>
 <body>
+
+<!-- PLAY OVERLAY -->
 <div id="overlay">
-  <h1>Stevie's Not Alone</h1>
-  <p>Click to lock mouse and start. WASD to move, SHIFT to sprint, E to interact.</p>
+  <button id="playButton">PLAY</button>
+  <p>Click PLAY to start. WASD to move, SHIFT to sprint, E to interact.</p>
 </div>
+
 <div id="ui-dialog">STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.</div>
 <div id="hint">Press E to interact. Press SHIFT to sprint.</div>
 <div id="sceneLabel">Scene: Stevie's room</div>
+
 <div id="skinSelector">
   Hand skin tone:
   <button data-skin="#f0c8a0">Light</button>
@@ -97,495 +118,359 @@
 
 <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
 <script src="https://unpkg.com/three@0.158.0/examples/js/controls/PointerLockControls.js"></script>
+
 <script>
-  const dialog = document.getElementById('ui-dialog');
-  const hint = document.getElementById('hint');
-  const sceneLabel = document.getElementById('sceneLabel');
-  const overlay = document.getElementById('overlay');
-  const skinSelector = document.getElementById('skinSelector');
+/* -------------------------
+   BASIC SETUP
+-------------------------- */
 
-  let scene, camera, renderer, controls;
-  let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-  let sprint = false;
-  let velocity = new THREE.Vector3();
-  let direction = new THREE.Vector3();
-  let prevTime = performance.now();
+const dialog = document.getElementById('ui-dialog');
+const hint = document.getElementById('hint');
+const sceneLabel = document.getElementById('sceneLabel');
+const overlay = document.getElementById('overlay');
+const playButton = document.getElementById('playButton');
+const skinSelector = document.getElementById('skinSelector');
 
-  let currentScene = 'bedroom'; // bedroom, hallway, kitchen, living, upstairs, downstairs, bathroom
-  let powerOn = false;
-  let hasKey = false;
-  let demonActive = false;
-  let demon;
-  let demonVisible = false;
-  let demonTargetScene = null;
+let scene, camera, renderer, controls;
+let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+let sprint = false;
+let velocity = new THREE.Vector3();
+let direction = new THREE.Vector3();
+let prevTime = performance.now();
 
-  let handMesh;
-  let skinColor = new THREE.Color('#f0c8a0');
+let currentScene = 'bedroom';
+let powerOn = false;
+let hasKey = false;
+let demonActive = false;
+let demon;
+let demonVisible = false;
+let demonTargetScene = null;
 
-  const allowedScenes = ['hallway', 'kitchen', 'living', 'upstairs', 'downstairs', 'bathroom', 'bedroom'];
+let handMesh;
+let skinColor = new THREE.Color('#f0c8a0');
 
-  init();
-  animate();
+const allowedScenes = ['hallway', 'kitchen', 'living', 'upstairs', 'downstairs', 'bathroom', 'bedroom'];
 
-  function init() {
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+init();
+animate();
 
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1.6, 0); // eye height
+/* -------------------------
+   INITIALIZATION
+-------------------------- */
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+function init() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x000000);
 
-    controls = new THREE.PointerLockControls(camera, document.body);
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 1.6, 0);
 
-    overlay.addEventListener('click', () => {
-      controls.lock();
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  controls = new THREE.PointerLockControls(camera, document.body);
+
+  playButton.addEventListener('click', () => {
+    controls.lock();
+  });
+
+  controls.addEventListener('lock', () => {
+    overlay.style.display = 'none';
+  });
+
+  controls.addEventListener('unlock', () => {
+    overlay.style.display = 'flex';
+  });
+
+  const ambient = new THREE.AmbientLight(0x404040, 0.8);
+  scene.add(ambient);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  dirLight.position.set(5, 10, 5);
+  scene.add(dirLight);
+
+  buildBedroom();
+  buildDemon();
+  buildHand();
+
+  skinSelector.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      skinColor.set(btn.dataset.skin);
+      handMesh.material.color.copy(skinColor);
     });
+  });
 
-    controls.addEventListener('lock', () => {
-      overlay.style.display = 'none';
-    });
+  document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('keyup', onKeyUp);
+  window.addEventListener('resize', onWindowResize);
+}
 
-    controls.addEventListener('unlock', () => {
-      overlay.style.display = 'flex';
-    });
+/* -------------------------
+   BUILD BEDROOM
+-------------------------- */
 
-    // Lights
-    const ambient = new THREE.AmbientLight(0x404040, 0.8);
-    scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-    dirLight.position.set(5, 10, 5);
-    scene.add(dirLight);
+function buildBedroom() {
+  sceneLabel.textContent = "Scene: Stevie's room";
 
-    // Build bedroom
-    buildBedroom();
+  const floorGeo = new THREE.PlaneGeometry(10, 10);
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.y = 0;
+  scene.add(floor);
 
-    // Demon
-    buildDemon();
+  const ceilGeo = new THREE.PlaneGeometry(10, 10);
+  const ceilMat = new THREE.MeshStandardMaterial({ color: 0x080808 });
+  const ceiling = new THREE.Mesh(ceilGeo, ceilMat);
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.y = 3;
+  scene.add(ceiling);
 
-    // Hand
-    buildHand();
+  const wallMat = new THREE.MeshStandardMaterial({ color: 0x1b1b1b });
+  const wallGeo = new THREE.PlaneGeometry(10, 3);
 
-    // Skin selector
-    skinSelector.querySelectorAll('button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        skinColor.set(btn.dataset.skin);
-        handMesh.material.color.copy(skinColor);
-      });
-    });
+  const wallFront = new THREE.Mesh(wallGeo, wallMat);
+  wallFront.position.set(0, 1.5, -5);
+  scene.add(wallFront);
 
-    // Events
-    document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('keyup', onKeyUp);
-    window.addEventListener('resize', onWindowResize);
-  }
+  const wallBack = new THREE.Mesh(wallGeo, wallMat);
+  wallBack.position.set(0, 1.5, 5);
+  wallBack.rotation.y = Math.PI;
+  scene.add(wallBack);
 
-  function buildBedroom() {
-    sceneLabel.textContent = "Scene: Stevie's room";
+  const wallLeft = new THREE.Mesh(wallGeo, wallMat);
+  wallLeft.position.set(-5, 1.5, 0);
+  wallLeft.rotation.y = Math.PI / 2;
+  scene.add(wallLeft);
 
-    // Floor
-    const floorGeo = new THREE.PlaneGeometry(10, 10);
-    const floorMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = 0;
-    scene.add(floor);
+  const wallRight = new THREE.Mesh(wallGeo, wallMat);
+  wallRight.position.set(5, 1.5, 0);
+  wallRight.rotation.y = -Math.PI / 2;
+  scene.add(wallRight);
 
-    // Ceiling
-    const ceilGeo = new THREE.PlaneGeometry(10, 10);
-    const ceilMat = new THREE.MeshStandardMaterial({ color: 0x080808 });
-    const ceiling = new THREE.Mesh(ceilGeo, ceilMat);
-    ceiling.rotation.x = Math.PI / 2;
-    ceiling.position.y = 3;
-    scene.add(ceiling);
+  const doorGeo = new THREE.BoxGeometry(1, 2.2, 0.1);
+  const doorMat = new THREE.MeshStandardMaterial({ color: 0x3b2b1a });
 
-    // Walls
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x1b1b1b });
-    const wallGeo = new THREE.PlaneGeometry(10, 3);
+  const frontDoor = new THREE.Mesh(doorGeo, doorMat);
+  frontDoor.position.set(1.5, 1.1, -4.99);
+  frontDoor.name = 'frontDoor';
+  scene.add(frontDoor);
 
-    const wallFront = new THREE.Mesh(wallGeo, wallMat);
-    wallFront.position.set(0, 1.5, -5);
-    scene.add(wallFront);
+  const bathroomDoor = new THREE.Mesh(doorGeo, doorMat);
+  bathroomDoor.position.set(-1.5, 1.1, -4.99);
+  bathroomDoor.name = 'bathroomDoor';
+  scene.add(bathroomDoor);
 
-    const wallBack = new THREE.Mesh(wallGeo, wallMat);
-    wallBack.position.set(0, 1.5, 5);
-    wallBack.rotation.y = Math.PI;
-    scene.add(wallBack);
+  const switchPlateGeo = new THREE.BoxGeometry(0.2, 0.3, 0.02);
+  const switchPlateMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5 });
+  const switchPlate = new THREE.Mesh(switchPlateGeo, switchPlateMat);
+  switchPlate.position.set(0.2, 1.4, -4.9);
+  switchPlate.name = 'switchPlate';
+  scene.add(switchPlate);
 
-    const wallLeft = new THREE.Mesh(wallGeo, wallMat);
-    wallLeft.position.set(-5, 1.5, 0);
-    wallLeft.rotation.y = Math.PI / 2;
-    scene.add(wallLeft);
+  const switchToggleGeo = new THREE.BoxGeometry(0.1, 0.2, 0.03);
+  const switchToggleMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0 });
+  const switchToggle = new THREE.Mesh(switchToggleGeo, switchToggleMat);
+  switchToggle.position.set(0.2, 1.4, -4.85);
+  switchToggle.name = 'switchToggle';
+  scene.add(switchToggle);
 
-    const wallRight = new THREE.Mesh(wallGeo, wallMat);
-    wallRight.position.set(5, 1.5, 0);
-    wallRight.rotation.y = -Math.PI / 2;
-    scene.add(wallRight);
+  const bedGeo = new THREE.BoxGeometry(2, 0.4, 1);
+  const bedMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+  const bed = new THREE.Mesh(bedGeo, bedMat);
+  bed.position.set(-3, 0.2, 2);
+  bed.name = 'bed';
+  scene.add(bed);
 
-    // Doors (front + bathroom)
-    const doorGeo = new THREE.BoxGeometry(1, 2.2, 0.1);
-    const doorMat = new THREE.MeshStandardMaterial({ color: 0x3b2b1a });
+  camera.position.set(0, 1.6, 2);
+}
 
-    const frontDoor = new THREE.Mesh(doorGeo, doorMat);
-    frontDoor.position.set(1.5, 1.1, -4.99);
-    frontDoor.name = 'frontDoor';
-    scene.add(frontDoor);
+/* -------------------------
+   DEMON
+-------------------------- */
 
-    const bathroomDoor = new THREE.Mesh(doorGeo, doorMat);
-    bathroomDoor.position.set(-1.5, 1.1, -4.99);
-    bathroomDoor.name = 'bathroomDoor';
-    scene.add(bathroomDoor);
+function buildDemon() {
+  const bodyGeo = new THREE.CylinderGeometry(0.3, 0.3, 2, 16);
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x330000 });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
 
-    // Simple labels (just for reference, not 3D text)
-    dialog.textContent = "STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.";
+  const headGeo = new THREE.SphereGeometry(0.4, 16, 16);
+  const headMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x330000 });
+  const head = new THREE.Mesh(headGeo, headMat);
+  head.position.y = 1.2;
 
-    // Light switch (small box on wall)
-    const switchPlateGeo = new THREE.BoxGeometry(0.2, 0.3, 0.02);
-    const switchPlateMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f5 });
-    const switchPlate = new THREE.Mesh(switchPlateGeo, switchPlateMat);
-    switchPlate.position.set(0.2, 1.4, -4.9);
-    switchPlate.name = 'switchPlate';
-    scene.add(switchPlate);
+  const demonGroup = new THREE.Group();
+  demonGroup.add(body);
+  demonGroup.add(head);
 
-    const switchToggleGeo = new THREE.BoxGeometry(0.1, 0.2, 0.03);
-    const switchToggleMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0 });
-    const switchToggle = new THREE.Mesh(switchToggleGeo, switchToggleMat);
-    switchToggle.position.set(0.2, 1.4, -4.85);
-    switchToggle.name = 'switchToggle';
-    scene.add(switchToggle);
+  const eyeGeo = new THREE.SphereGeometry(0.06, 8, 8);
+  const eyeMat = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000 });
+  const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+  const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+  eyeL.position.set(-0.15, 1.25, 0.35);
+  eyeR.position.set(0.15, 1.25, 0.35);
+  demonGroup.add(eyeL, eyeR);
 
-    // Bed (simple box)
-    const bedGeo = new THREE.BoxGeometry(2, 0.4, 1);
-    const bedMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
-    const bed = new THREE.Mesh(bedGeo, bedMat);
-    bed.position.set(-3, 0.2, 2);
-    bed.name = 'bed';
-    scene.add(bed);
+  const teethGeo = new THREE.BoxGeometry(0.3, 0.1, 0.05);
+  const teethMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+  const teeth = new THREE.Mesh(teethGeo, teethMat);
+  teeth.position.set(0, 1.05, 0.35);
+  demonGroup.add(teeth);
 
-    camera.position.set(0, 1.6, 2);
-  }
+  demonGroup.visible = false;
+  demonGroup.position.set(0, 1, -3);
+  demonGroup.name = 'demon';
 
-  function buildDemon() {
-    const bodyGeo = new THREE.CylinderGeometry(0.3, 0.3, 2, 16);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x330000 });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
+  demon = demonGroup;
+  scene.add(demon);
+}
 
-    const headGeo = new THREE.SphereGeometry(0.4, 16, 16);
-    const headMat = new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x330000 });
-    const head = new THREE.Mesh(headGeo, headMat);
-    head.position.y = 1.2;
+/* -------------------------
+   HAND
+-------------------------- */
 
-    const demonGroup = new THREE.Group();
-    demonGroup.add(body);
-    demonGroup.add(head);
+function buildHand() {
+  const handGeo = new THREE.BoxGeometry(0.3, 0.6, 0.2);
+  const handMat = new THREE.MeshStandardMaterial({ color: skinColor });
+  handMesh = new THREE.Mesh(handGeo, handMat);
+  handMesh.position.set(0.4, 1.1, -0.6);
+  handMesh.rotation.y = -0.6;
+  handMesh.rotation.x = -0.4;
+  camera.add(handMesh);
+  scene.add(camera);
+}
 
-    // Eyes
-    const eyeGeo = new THREE.SphereGeometry(0.06, 8, 8);
-    const eyeMat = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: 0xff0000 });
-    const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
-    const eyeR = new THREE.Mesh(eyeGeo, eyeMat);
-    eyeL.position.set(-0.15, 1.25, 0.35);
-    eyeR.position.set(0.15, 1.25, 0.35);
-    demonGroup.add(eyeL, eyeR);
+/* -------------------------
+   INPUT
+-------------------------- */
 
-    // Teeth (small box)
-    const teethGeo = new THREE.BoxGeometry(0.3, 0.1, 0.05);
-    const teethMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const teeth = new THREE.Mesh(teethGeo, teethMat);
-    teeth.position.set(0, 1.05, 0.35);
-    demonGroup.add(teeth);
-
-    demonGroup.visible = false;
-    demonGroup.position.set(0, 1, -3);
-    demonGroup.name = 'demon';
-
-    demon = demonGroup;
-    scene.add(demon);
-  }
-
-  function buildHand() {
-    const handGeo = new THREE.BoxGeometry(0.3, 0.6, 0.2);
-    const handMat = new THREE.MeshStandardMaterial({ color: skinColor });
-    handMesh = new THREE.Mesh(handGeo, handMat);
-    handMesh.position.set(0.4, 1.1, -0.6);
-    handMesh.rotation.y = -0.6;
-    handMesh.rotation.x = -0.4;
-    camera.add(handMesh);
-    scene.add(camera);
-  }
-
-  function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  }
-
-  function onKeyDown(event) {
-    switch (event.code) {
-      case 'KeyW': moveForward = true; break;
-      case 'KeyS': moveBackward = true; break;
-      case 'KeyA': moveLeft = true; break;
-      case 'KeyD': moveRight = true; break;
-      case 'ShiftLeft':
-      case 'ShiftRight':
-        sprint = true;
-        break;
-      case 'KeyE':
-        interact();
-        break;
-      case 'KeyL':
-        // "Look" at demon -> teleport
-        if (demonVisible) {
-          demonVisible = false;
-          demon.visible = false;
-          setTimeout(spawnDemonRandom, 400);
-          dialog.textContent = 'STEVIE: ...Did he just move?';
-        }
-        break;
-    }
-  }
-
-  function onKeyUp(event) {
-    switch (event.code) {
-      case 'KeyW': moveForward = false; break;
-      case 'KeyS': moveBackward = false; break;
-      case 'KeyA': moveLeft = false; break;
-      case 'KeyD': moveRight = false; break;
-      case 'ShiftLeft':
-      case 'ShiftRight':
-        sprint = false;
-        break;
-    }
-  }
-
-  function interact() {
-    // Raycast from camera to see what we're looking at
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-    const intersects = raycaster.intersectObjects(scene.children, true);
-
-    if (intersects.length > 0) {
-      const obj = intersects[0].object;
-      const name = obj.name;
-
-      if (name === 'switchPlate' || name === 'switchToggle') {
-        interactSwitch();
-      } else if (name === 'frontDoor') {
-        interactFrontDoor();
-      } else if (name === 'bathroomDoor') {
-        interactBathroomDoor();
-      } else if (name === 'bed') {
-        dialog.textContent = "STEVIE: I can't sleep. Not tonight.";
-      } else if (name === 'demon') {
-        // staring at demon
-        if (demonVisible) {
-          demonVisible = false;
-          demon.visible = false;
-          setTimeout(spawnDemonRandom, 400);
-          dialog.textContent = 'STEVIE: ...Did he just move?';
-        }
-      } else if (name === 'diningTable') {
-        if (!hasKey) {
-          interactKey();
-        }
-      } else if (name === 'parentsDoor') {
-        interactParentsDoor();
-      } else if (name === 'basementDoor') {
-        interactBasementDoor();
+function onKeyDown(event) {
+  switch (event.code) {
+    case 'KeyW': moveForward = true; break;
+    case 'KeyS': moveBackward = true; break;
+    case 'KeyA': moveLeft = true; break;
+    case 'KeyD': moveRight = true; break;
+    case 'ShiftLeft':
+    case 'ShiftRight':
+      sprint = true;
+      break;
+    case 'KeyE':
+      interact();
+      break;
+    case 'KeyL':
+      if (demonVisible) {
+        demonVisible = false;
+        demon.visible = false;
+        setTimeout(spawnDemonRandom, 400);
+        dialog.textContent = 'STEVIE: ...Did he just move?';
       }
-    } else {
-      // Scene-based interaction (e.g. leaving bedroom)
-      if (currentScene === 'bedroom') {
-        if (!demonActive && powerOn) {
-          demonActive = true;
-          dialog.textContent = 'STEVIE: I should check the hallway...';
-          goToScene('hallway');
-        } else {
-          dialog.textContent = 'STEVIE: I should probably leave my room.';
-        }
+      break;
+  }
+}
+
+function onKeyUp(event) {
+  switch (event.code) {
+    case 'KeyW': moveForward = false; break;
+    case 'KeyS': moveBackward = false; break;
+    case 'KeyA': moveLeft = false; break;
+    case 'KeyD': moveRight = false; break;
+    case 'ShiftLeft':
+    case 'ShiftRight':
+      sprint = false;
+      break;
+  }
+}
+
+/* -------------------------
+   INTERACTION
+-------------------------- */
+
+function interact() {
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const intersects = raycaster.intersectObjects(scene.children, true);
+
+  if (intersects.length > 0) {
+    const obj = intersects[0].object;
+    const name = obj.name;
+
+    if (name === 'switchPlate' || name === 'switchToggle') {
+      interactSwitch();
+    } else if (name === 'frontDoor') {
+      dialog.textContent = "STEVIE: It's locked. Obviously. It's 1AM for god's sake!!";
+    } else if (name === 'bathroomDoor') {
+      if (!hasKey) {
+        dialog.textContent = "STEVIE: Why the hell would they lock the bathroom from outside!? I need a key.";
+      } else {
+        dialog.textContent = "STEVIE: Got it. Bathroom's open.";
+        goToScene('bathroom');
+      }
+    } else if (name === 'bed') {
+      dialog.textContent = "STEVIE: I can't sleep. Not tonight.";
+    } else if (name === 'demon') {
+      if (demonVisible) {
+        demonVisible = false;
+        demon.visible = false;
+        setTimeout(spawnDemonRandom, 400);
+        dialog.textContent = 'STEVIE: ...Did he just move?';
+      }
+    } else if (name === 'diningTable') {
+      if (!hasKey) {
+        hasKey = true;
+        dialog.textContent = "STEVIE: A key...? Under the dining table?";
+      }
+    } else if (name === 'parentsDoor') {
+      dialog.textContent = "STEVIE: No WAY am I going in there!! Mother and Father would KILL ME!";
+    } else if (name === 'basementDoor') {
+      dialog.textContent = "STEVIE: No! It's too dark and scary...";
+    }
+  } else {
+    if (currentScene === 'bedroom') {
+      if (!demonActive && powerOn) {
+        demonActive = true;
+        dialog.textContent = 'STEVIE: I should check the hallway...';
+        goToScene('hallway');
+      } else {
+        dialog.textContent = 'STEVIE: I should probably leave my room.';
       }
     }
   }
+}
 
-  function interactSwitch() {
-    if (!powerOn) {
-      powerOn = true;
-      dialog.textContent = "STEVIE: That should fix the generators... I guess.";
-      setTimeout(() => {
-        dialog.textContent = "STEVIE: I should probably check the rest of the house.";
-      }, 1500);
-    } else {
-      dialog.textContent = "STEVIE: Already flipped it.";
-    }
+function interactSwitch() {
+  if (!powerOn) {
+    powerOn = true;
+    dialog.textContent = "STEVIE: That should fix the generators... I guess.";
+    setTimeout(() => {
+      dialog.textContent = "STEVIE: I should probably check the rest of the house.";
+    }, 1500);
+  } else {
+    dialog.textContent = "STEVIE: Already flipped it.";
   }
+}
 
-  function interactFrontDoor() {
-    dialog.textContent = "STEVIE: It's locked. Obviously. It's 1AM for god's sake!!";
+/* -------------------------
+   SCENE SWITCHING
+-------------------------- */
+
+function randomAllowedScene() {
+  return allowedScenes[Math.floor(Math.random() * allowedScenes.length)];
+}
+
+function spawnDemonRandom() {
+  if (!demonActive) return;
+  demonTargetScene = randomAllowedScene();
+  demonVisible = true;
+  demon.visible = true;
+
+  let pos = new THREE.Vector3(0, 1, -3);
+  switch (demonTargetScene) {
+    case 'hallway': pos.set(0, 1, -8); break;
+    case 'kitchen': pos.set(-4, 1, -6); break;
+    case 'living': pos.set(4, 1, -6); break;
+    case 'upstairs': pos.set(0, 1, -10); break;
+    case 'downstairs': pos.set(0, 1, -10); break;
+    case 'bathroom': pos.set(-1.5, 1, -4); break;
+    case 'bedroom': pos.set(2, 1, 1); break;
   }
-
-  function interactBathroomDoor() {
-    if (!hasKey) {
-      dialog.textContent = "STEVIE: Why the hell would they lock the bathroom from outside!? I need a key.";
-    } else {
-      dialog.textContent = "STEVIE: Got it. Bathroom's open.";
-      goToScene('bathroom');
-    }
-  }
-
-  function interactParentsDoor() {
-    dialog.textContent = "STEVIE: No WAY am I going in there!! Mother and Father would KILL ME!";
-  }
-
-  function interactBasementDoor() {
-    dialog.textContent = "STEVIE: No! It's too dark and scary...";
-  }
-
-  function interactKey() {
-    hasKey = true;
-    dialog.textContent = "STEVIE: A key...? Under the dining table?";
-  }
-
-  function randomAllowedScene() {
-    return allowedScenes[Math.floor(Math.random() * allowedScenes.length)];
-  }
-
-  function spawnDemonRandom() {
-    if (!demonActive) return;
-    demonTargetScene = randomAllowedScene();
-    demonVisible = true;
-    demon.visible = true;
-
-    let pos = new THREE.Vector3(0, 1, -3);
-    switch (demonTargetScene) {
-      case 'hallway': pos.set(0, 1, -8); break;
-      case 'kitchen': pos.set(-4, 1, -6); break;
-      case 'living': pos.set(4, 1, -6); break;
-      case 'upstairs': pos.set(0, 1, -10); break;
-      case 'downstairs': pos.set(0, 1, -10); break;
-      case 'bathroom': pos.set(-1.5, 1, -4); break;
-      case 'bedroom': pos.set(2, 1, 1); break;
-    }
-    demon.position.copy(pos);
-  }
-
-  function goToScene(sceneName) {
-    currentScene = sceneName;
-    sceneLabel.textContent = "Scene: " + (
-      sceneName === 'bedroom' ? "Stevie's room" :
-      sceneName === 'hallway' ? "Hallway" :
-      sceneName === 'kitchen' ? "Kitchen" :
-      sceneName === 'living' ? "Living room" :
-      sceneName === 'upstairs' ? "Upstairs landing" :
-      sceneName === 'downstairs' ? "Downstairs landing" :
-      sceneName === 'bathroom' ? "Bathroom" : sceneName
-    );
-
-    if (sceneName === 'hallway') {
-      dialog.textContent = "STEVIE: The hallway feels wrong tonight.";
-      camera.position.set(0, 1.6, -2);
-    } else if (sceneName === 'kitchen') {
-      dialog.textContent = "STEVIE: The kitchen... maybe there's something useful here.";
-      camera.position.set(-4, 1.6, -6);
-      buildKitchen();
-    } else if (sceneName === 'living') {
-      dialog.textContent = "STEVIE: The living room is too quiet.";
-      camera.position.set(4, 1.6, -6);
-    } else if (sceneName === 'upstairs') {
-      dialog.textContent = "STEVIE: Upstairs landing... Parents' room is up here.";
-      camera.position.set(0, 1.6, -8);
-      buildParentsDoor();
-    } else if (sceneName === 'downstairs') {
-      dialog.textContent = "STEVIE: Downstairs... The basement door is here.";
-      camera.position.set(0, 1.6, -10);
-      buildBasementDoor();
-    } else if (sceneName === 'bathroom') {
-      dialog.textContent = "STEVIE: Finally. The bathroom.";
-      camera.position.set(-1.5, 1.6, -4.5);
-    } else if (sceneName === 'bedroom') {
-      dialog.textContent = "STEVIE: My room... I don’t feel safe anymore.";
-      camera.position.set(0, 1.6, 2);
-    }
-
-    if (demonActive && !demonVisible) {
-      spawnDemonRandom();
-    }
-  }
-
-  let kitchenBuilt = false;
-  function buildKitchen() {
-    if (kitchenBuilt) return;
-    kitchenBuilt = true;
-
-    const tableGeo = new THREE.BoxGeometry(1.6, 0.1, 0.8);
-    const tableMat = new THREE.MeshStandardMaterial({ color: 0x3b3b3b });
-    const table = new THREE.Mesh(tableGeo, tableMat);
-    table.position.set(-4, 0.8, -6);
-    table.name = 'diningTable';
-    scene.add(table);
-
-    // Key is "under" table (we just interact with table)
-  }
-
-  let parentsDoorBuilt = false;
-  function buildParentsDoor() {
-    if (parentsDoorBuilt) return;
-    parentsDoorBuilt = true;
-
-    const doorGeo = new THREE.BoxGeometry(1, 2.2, 0.1);
-    const doorMat = new THREE.MeshStandardMaterial({ color: 0x3b2b1a });
-    const parentsDoor = new THREE.Mesh(doorGeo, doorMat);
-    parentsDoor.position.set(-2, 1.1, -11);
-    parentsDoor.name = 'parentsDoor';
-    scene.add(parentsDoor);
-  }
-
-  let basementDoorBuilt = false;
-  function buildBasementDoor() {
-    if (basementDoorBuilt) return;
-    basementDoorBuilt = true;
-
-    const doorGeo = new THREE.BoxGeometry(1, 2.2, 0.1);
-    const doorMat = new THREE.MeshStandardMaterial({ color: 0x3b2b1a });
-    const basementDoor = new THREE.Mesh(doorGeo, doorMat);
-    basementDoor.position.set(2, 1.1, -11);
-    basementDoor.name = 'basementDoor';
-    scene.add(basementDoor);
-  }
-
-  function animate() {
-    requestAnimationFrame(animate);
-
-    const time = performance.now();
-    const delta = (time - prevTime) / 1000;
-
-    if (controls.isLocked) {
-      velocity.x -= velocity.x * 10.0 * delta;
-      velocity.z -= velocity.z * 10.0 * delta;
-
-      direction.z = Number(moveForward) - Number(moveBackward);
-      direction.x = Number(moveRight) - Number(moveLeft);
-      direction.normalize();
-
-      const speed = sprint ? 8 : 4;
-
-      if (moveForward || moveBackward) velocity.z -= direction.z * speed * delta;
-      if (moveLeft || moveRight) velocity.x -= direction.x * speed * delta;
-
-      controls.moveRight(-velocity.x * delta);
-      controls.moveForward(-velocity.z * delta);
-    }
-
-    prevTime = time;
-
-    // Demon slow movement
-    if (demonVisible) {
-      demon.position.z += 0.01; // very slow
-    }
-
-    renderer.render(scene, camera);
-  }
-</script>
-</body>
-</html>
