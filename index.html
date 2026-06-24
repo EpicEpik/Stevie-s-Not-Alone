@@ -1,425 +1,404 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Stevie's Not Alone –</title>
-<style>
-  body {
-    margin: 0;
-    background: #000;
-    color: #fff;
-    font-family: Arial, sans-serif;
-  }
+  <meta charset="UTF-8" />
+  <title>Stevie House – Room Switcher</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui, sans-serif;
+      height: 100%;
+    }
 
-  /* Layout */
-  #game {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
+    #container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 60px; /* leave space for bottom bar */
+    }
 
-  #roomView {
-    flex: 1;
-    position: relative;
-    background: radial-gradient(circle at center, #222 0%, #050505 60%, #000 100%);
-    overflow: hidden;
-  }
+    canvas {
+      display: block;
+    }
 
-  /* Placeholder realistic dark room look */
-  .room-bg {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center;
-    filter: brightness(0.4) contrast(1.2);
-  }
+    #room-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: #000;
+      border-top: 2px solid #400000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.8);
+      z-index: 10;
+    }
 
-  /* You can later replace these with real images */
-  .room-bedroom    { background-image: linear-gradient(to bottom, #111 0%, #000 60%); }
-  .room-hallway    { background-image: linear-gradient(to bottom, #050505 0%, #000 80%); }
-  .room-kitchen    { background-image: linear-gradient(to bottom, #151515 0%, #000 80%); }
-  .room-living     { background-image: linear-gradient(to bottom, #101010 0%, #000 80%); }
-  .room-bathroom   { background-image: linear-gradient(to bottom, #202020 0%, #000 80%); }
-  .room-upstairs   { background-image: linear-gradient(to bottom, #080808 0%, #000 80%); }
-  .room-downstairs { background-image: linear-gradient(to bottom, #030303 0%, #000 80%); }
+    .room-button {
+      background: #111;
+      color: #ff3333;
+      border: 2px solid #660000;
+      padding: 8px 14px;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+      box-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
+      white-space: nowrap;
+    }
 
-  /* Demon silhouette */
-  #demon {
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 120px;
-    height: 260px;
-    background: radial-gradient(circle at top, #300 0%, #000 60%);
-    border-radius: 60px;
-    box-shadow: 0 0 40px rgba(255,0,0,0.4);
-    display: none;
-  }
-  #demon::before {
-    content: "";
-    position: absolute;
-    top: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    background: #000;
-  }
-  #demon::after {
-    content: "";
-    position: absolute;
-    top: 65px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 20px;
-    border-radius: 10px;
-    background: #fff;
-  }
-  .demon-eyes {
-    position: absolute;
-    top: 70px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #f00;
-    box-shadow: 0 0 10px #f00;
-  }
-  .demon-eye-left  { left: calc(50% - 22px); }
-  .demon-eye-right { left: calc(50% + 6px); }
+    .room-button:hover {
+      background: #220000;
+      transform: translateY(-2px);
+      box-shadow: 0 0 12px rgba(255, 0, 0, 0.5);
+    }
 
-  /* Hand overlay */
-  #hand {
-    position: absolute;
-    bottom: 20px;
-    right: 40px;
-    width: 120px;
-    height: 80px;
-    border-radius: 40px;
-    background: #f0c8a0;
-    box-shadow: 0 0 20px rgba(0,0,0,0.7);
-    opacity: 0.9;
-  }
-
-  /* UI */
-  #ui-dialog {
-    position: fixed;
-    top: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: 70%;
-    padding: 10px 14px;
-    background: rgba(20,20,20,0.8);
-    border-radius: 8px;
-    font-size: 15px;
-    z-index: 5;
-  }
-
-  #hint {
-    position: fixed;
-    bottom: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 8px 12px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 6px;
-    font-size: 13px;
-    z-index: 5;
-  }
-
-  #sceneLabel {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    font-size: 13px;
-    opacity: 0.7;
-    z-index: 5;
-  }
-
-  #skinSelector {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 5;
-    background: rgba(0,0,0,0.6);
-    padding: 10px 12px;
-    border-radius: 6px;
-    font-size: 14px;
-  }
-  #skinSelector button {
-    margin: 4px;
-    padding: 10px 14px;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 6px;
-    border: none;
-  }
-
-  /* Navigation */
-  #nav {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px;
-    background: #050505;
-    border-top: 1px solid #111;
-  }
-  #nav button {
-    padding: 10px 16px;
-    font-size: 14px;
-    cursor: pointer;
-    border-radius: 6px;
-    border: none;
-    background: #222;
-    color: #fff;
-  }
-  #nav button:hover {
-    background: #333;
-  }
-
-  /* Jumpscare overlay */
-  #jumpscare {
-    position: fixed;
-    inset: 0;
-    background: radial-gradient(circle at center, #700 0%, #000 70%);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    font-size: 40px;
-    color: #fff;
-    z-index: 20;
-  }
-</style>
+    .room-button.active {
+      background: #440000;
+      color: #fff;
+      box-shadow: 0 0 16px rgba(255, 0, 0, 0.8);
+    }
+  </style>
 </head>
 <body>
-<div id="game">
-  <div id="roomView">
-    <div id="roomBg" class="room-bg room-bedroom"></div>
-    <div id="demon">
-      <div class="demon-eyes demon-eye-left"></div>
-      <div class="demon-eyes demon-eye-right"></div>
-    </div>
-    <div id="hand"></div>
+  <div id="container"></div>
+
+  <div id="room-bar">
+    <button class="room-button active" data-room="bedroom">Bedroom</button>
+    <button class="room-button" data-room="hallway">Hallway</button>
+    <button class="room-button" data-room="kitchen">Kitchen</button>
+    <button class="room-button" data-room="bathroom">Bathroom</button>
+    <button class="room-button" data-room="living">Living Room</button>
+    <button class="room-button" data-room="basement">Basement</button>
+    <button class="room-button" data-room="attic">Attic</button>
+    <button class="room-button" data-room="outside">Outside</button>
   </div>
-  <div id="nav">
-    <button data-target="hallway">Go to Hallway</button>
-    <button data-target="kitchen">Go to Kitchen</button>
-    <button data-target="living">Go to Living Room</button>
-    <button data-target="bathroomDoor">Go to Bathroom Door</button>
-    <button data-target="upstairs">Go Upstairs</button>
-    <button data-target="downstairs">Go Downstairs</button>
-    <button data-target="bedroom">Back to Bedroom</button>
-  </div>
-</div>
 
-<div id="ui-dialog">STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.</div>
-<div id="hint">Click the buttons below to move around the house. Click rooms carefully...</div>
-<div id="sceneLabel">Scene: Stevie's room</div>
+  <!-- Three.js CDN -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
 
-<div id="skinSelector">
-  Hand skin tone:
-  <button data-skin="#f0c8a0">Light</button>
-  <button data-skin="#d29b6c">Medium</button>
-  <button data-skin="#8b5a2b">Dark</button>
-</div>
+  <script>
+    // ====== BASIC SETUP ======
+    const container = document.getElementById('container');
 
-<div id="jumpscare">JUMPSCARE</div>
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x000000);
+    container.appendChild(renderer.domElement);
 
-<script>
-  const dialog = document.getElementById('ui-dialog');
-  const hint = document.getElementById('hint');
-  const sceneLabel = document.getElementById('sceneLabel');
-  const roomBg = document.getElementById('roomBg');
-  const demonEl = document.getElementById('demon');
-  const jumpscareEl = document.getElementById('jumpscare');
-  const handEl = document.getElementById('hand');
-  const navButtons = document.querySelectorAll('#nav button');
-  const skinButtons = document.querySelectorAll('#skinSelector button');
-
-  let currentScene = 'bedroom';
-  let powerOn = false;
-  let hasKey = false;
-  let demonActive = false;
-  let demonVisible = false;
-
-  const sceneClasses = {
-    bedroom: 'room-bedroom',
-    hallway: 'room-hallway',
-    kitchen: 'room-kitchen',
-    living: 'room-living',
-    bathroomDoor: 'room-bathroom',
-    upstairs: 'room-upstairs',
-    downstairs: 'room-downstairs',
-    bathroom: 'room-bathroom'
-  };
-
-  function setScene(scene) {
-    currentScene = scene;
-    roomBg.className = 'room-bg ' + (sceneClasses[scene] || 'room-bedroom');
-
-    sceneLabel.textContent = 'Scene: ' + (
-      scene === 'bedroom'      ? "Stevie's room" :
-      scene === 'hallway'      ? "Hallway" :
-      scene === 'kitchen'      ? "Kitchen" :
-      scene === 'living'       ? "Living room" :
-      scene === 'bathroomDoor' ? "Bathroom door" :
-      scene === 'bathroom'     ? "Bathroom" :
-      scene === 'upstairs'     ? "Upstairs landing" :
-      scene === 'downstairs'   ? "Downstairs landing" :
-      scene
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      100
     );
+    camera.position.set(0, 2, 6);
 
-    demonEl.style.display = 'none';
-    demonVisible = false;
+    // We'll swap this reference when changing rooms
+    let currentScene;
 
-    if (demonActive) {
-      maybeSpawnDemon();
+    // Store all scenes by name
+    const scenes = {};
+
+    // ====== HELPER: CREATE SIMPLE ROOM BOX ======
+    function createRoomScene(colorHex) {
+      const scene = new THREE.Scene();
+
+      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambient);
+
+      const dir = new THREE.DirectionalLight(0xffffff, 0.6);
+      dir.position.set(3, 5, 2);
+      scene.add(dir);
+
+      // Floor
+      const floorGeo = new THREE.PlaneGeometry(10, 10);
+      const floorMat = new THREE.MeshStandardMaterial({ color: colorHex });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = 0;
+      scene.add(floor);
+
+      // Back wall
+      const wallGeo = new THREE.PlaneGeometry(10, 5);
+      const wallMat = new THREE.MeshStandardMaterial({ color: colorHex, side: THREE.BackSide });
+      const backWall = new THREE.Mesh(wallGeo, wallMat);
+      backWall.position.set(0, 2.5, -5);
+      scene.add(backWall);
+
+      return scene;
     }
 
-    updateDialogueForScene();
-  }
+    // ====== BEDROOM SCENE WITH STEVIE ======
+    function createBedroomScene() {
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x050509);
 
-  function updateDialogueForScene() {
-    if (currentScene === 'bedroom') {
-      if (!powerOn) {
-        dialog.textContent = "STEVIE: Oh, the power's out again. I could fix the generators... Or just go back to sleep.";
-        hint.textContent = "Click around the room. Maybe there's a switch.";
-      } else {
-        dialog.textContent = "STEVIE: My room... I don’t feel safe anymore.";
-        hint.textContent = "You can explore the hallway, kitchen, living room, and more.";
-      }
-    } else if (currentScene === 'hallway') {
-      dialog.textContent = "STEVIE: The hallway feels wrong tonight.";
-      hint.textContent = "Click other rooms or go back to the bedroom.";
-    } else if (currentScene === 'kitchen') {
-      if (!hasKey) {
-        dialog.textContent = "STEVIE: The kitchen... maybe there's something useful here.";
-        hint.textContent = "Click again to check under the dining table.";
-      } else {
-        dialog.textContent = "STEVIE: I already grabbed the key from here.";
-        hint.textContent = "You can go to the bathroom door now.";
-      }
-    } else if (currentScene === 'living') {
-      dialog.textContent = "STEVIE: The living room is too quiet.";
-      hint.textContent = "Silence is never good.";
-    } else if (currentScene === 'bathroomDoor') {
-      if (!hasKey) {
-        dialog.textContent = "STEVIE: Why the hell would they lock the bathroom from outside!? I need a key.";
-        hint.textContent = "Maybe check the kitchen again.";
-      } else {
-        dialog.textContent = "STEVIE: Got it. Bathroom's open.";
-        hint.textContent = "Click again to enter the bathroom.";
-      }
-    } else if (currentScene === 'bathroom') {
-      dialog.textContent = "STEVIE: Finally. The bathroom.";
-      hint.textContent = "You don't feel alone in here.";
-    } else if (currentScene === 'upstairs') {
-      dialog.textContent = "STEVIE: Upstairs landing... Parents' room is up here.";
-      hint.textContent = "You really shouldn't go into their room.";
-    } else if (currentScene === 'downstairs') {
-      dialog.textContent = "STEVIE: Downstairs... The basement door is here.";
-      hint.textContent = "You are absolutely not going down there.";
+      // Soft ambient
+      const ambient = new THREE.AmbientLight(0x404060, 0.4);
+      scene.add(ambient);
+
+      // Moonlight directional
+      const moonLight = new THREE.DirectionalLight(0x8ab4ff, 1.0);
+      moonLight.position.set(-3, 5, 2);
+      scene.add(moonLight);
+
+      // Floor
+      const floorGeo = new THREE.PlaneGeometry(10, 10);
+      const floorMat = new THREE.MeshStandardMaterial({ color: 0x202020 });
+      const floor = new THREE.Mesh(floorGeo, floorMat);
+      floor.rotation.x = -Math.PI / 2;
+      floor.position.y = 0;
+      scene.add(floor);
+
+      // Walls
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x181820 });
+      const wallGeo = new THREE.PlaneGeometry(10, 5);
+
+      const backWall = new THREE.Mesh(wallGeo, wallMat);
+      backWall.position.set(0, 2.5, -5);
+      scene.add(backWall);
+
+      const leftWall = new THREE.Mesh(wallGeo, wallMat);
+      leftWall.rotation.y = Math.PI / 2;
+      leftWall.position.set(-5, 2.5, 0);
+      scene.add(leftWall);
+
+      const rightWall = new THREE.Mesh(wallGeo, wallMat);
+      rightWall.rotation.y = -Math.PI / 2;
+      rightWall.position.set(5, 2.5, 0);
+      scene.add(rightWall);
+
+      // Window on back wall (moonlight source)
+      const windowGeo = new THREE.PlaneGeometry(3, 2);
+      const windowMat = new THREE.MeshBasicMaterial({ color: 0x101020 });
+      const windowMesh = new THREE.Mesh(windowGeo, windowMat);
+      windowMesh.position.set(-1.5, 3.2, -4.99);
+      scene.add(windowMesh);
+
+      // Moonlight beam on floor
+      const beamGeo = new THREE.PlaneGeometry(3, 4);
+      const beamMat = new THREE.MeshBasicMaterial({
+        color: 0x8ab4ff,
+        transparent: true,
+        opacity: 0.25
+      });
+      const beam = new THREE.Mesh(beamGeo, beamMat);
+      beam.rotation.x = -Math.PI / 2;
+      beam.position.set(-1.5, 0.01, -1);
+      scene.add(beam);
+
+      // Mattress
+      const mattressGeo = new THREE.BoxGeometry(3, 0.3, 1.6);
+      const mattressMat = new THREE.MeshStandardMaterial({ color: 0xcfcfcf });
+      const mattress = new THREE.Mesh(mattressGeo, mattressMat);
+      mattress.position.set(0, 0.15, 0);
+      scene.add(mattress);
+
+      // Blanket (bunched near feet)
+      const blanketGeo = new THREE.BoxGeometry(2.2, 0.2, 0.8);
+      const blanketMat = new THREE.MeshStandardMaterial({ color: 0x303060 });
+      const blanket = new THREE.Mesh(blanketGeo, blanketMat);
+      blanket.position.set(0.2, 0.35, 0.4);
+      scene.add(blanket);
+
+      // ====== STEVIE (SCARED, SITTING ON MATTRESS) ======
+      const stevie = new THREE.Group();
+
+      // Body
+      const bodyGeo = new THREE.BoxGeometry(0.6, 0.9, 0.4);
+      const bodyMat = new THREE.MeshStandardMaterial({ color: 0x334488 });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.set(0, 0.9, 0);
+      stevie.add(body);
+
+      // Head
+      const headGeo = new THREE.SphereGeometry(0.3, 16, 16);
+      const headMat = new THREE.MeshStandardMaterial({ color: 0xffd2b3 });
+      const head = new THREE.Mesh(headGeo, headMat);
+      head.position.set(0, 1.5, 0.05);
+      stevie.add(head);
+
+      // Hair (simple block fringe)
+      const hairGeo = new THREE.BoxGeometry(0.7, 0.35, 0.6);
+      const hairMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+      const hair = new THREE.Mesh(hairGeo, hairMat);
+      hair.position.set(0, 1.65, 0);
+      stevie.add(hair);
+
+      // Legs (knees up)
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x334488 });
+      const upperLegGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.5, 8);
+      const lowerLegGeo = new THREE.CylinderGeometry(0.11, 0.11, 0.4, 8);
+
+      // Left upper leg
+      const leftUpperLeg = new THREE.Mesh(upperLegGeo, legMat);
+      leftUpperLeg.rotation.x = Math.PI / 2.2;
+      leftUpperLeg.position.set(-0.18, 0.7, 0.15);
+      stevie.add(leftUpperLeg);
+
+      // Left lower leg
+      const leftLowerLeg = new THREE.Mesh(lowerLegGeo, legMat);
+      leftLowerLeg.rotation.x = Math.PI / 2.2;
+      leftLowerLeg.position.set(-0.18, 0.9, 0.45);
+      stevie.add(leftLowerLeg);
+
+      // Right upper leg
+      const rightUpperLeg = new THREE.Mesh(upperLegGeo, legMat);
+      rightUpperLeg.rotation.x = Math.PI / 2.2;
+      rightUpperLeg.position.set(0.18, 0.7, 0.15);
+      stevie.add(rightUpperLeg);
+
+      // Right lower leg
+      const rightLowerLeg = new THREE.Mesh(lowerLegGeo, legMat);
+      rightLowerLeg.rotation.x = Math.PI / 2.2;
+      rightLowerLeg.position.set(0.18, 0.9, 0.45);
+      stevie.add(rightLowerLeg);
+
+      // Arms wrapped loosely around shins
+      const armMat = new THREE.MeshStandardMaterial({ color: 0xffd2b3 });
+      const armGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.6, 8);
+
+      const leftArm = new THREE.Mesh(armGeo, armMat);
+      leftArm.rotation.z = Math.PI / 2.8;
+      leftArm.position.set(-0.25, 1.0, 0.35);
+      stevie.add(leftArm);
+
+      const rightArm = new THREE.Mesh(armGeo, armMat);
+      rightArm.rotation.z = -Math.PI / 2.8;
+      rightArm.position.set(0.25, 1.0, 0.35);
+      stevie.add(rightArm);
+
+      // Glasses
+      const glassMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
+      const frameGeo = new THREE.BoxGeometry(0.3, 0.18, 0.02);
+
+      const leftFrame = new THREE.Mesh(frameGeo, glassMat);
+      leftFrame.position.set(-0.17, 1.5, 0.32);
+      stevie.add(leftFrame);
+
+      const rightFrame = new THREE.Mesh(frameGeo, glassMat);
+      rightFrame.position.set(0.17, 1.5, 0.32);
+      stevie.add(rightFrame);
+
+      const bridgeGeo = new THREE.BoxGeometry(0.1, 0.05, 0.02);
+      const bridge = new THREE.Mesh(bridgeGeo, glassMat);
+      bridge.position.set(0, 1.5, 0.32);
+      stevie.add(bridge);
+
+      // Cracked lens effect (simple line)
+      const crackGeo = new THREE.BoxGeometry(0.02, 0.18, 0.01);
+      const crackMat = new THREE.MeshBasicMaterial({ color: 0x88aaff });
+      const crack = new THREE.Mesh(crackGeo, crackMat);
+      crack.position.set(0.17, 1.5, 0.34);
+      stevie.add(crack);
+
+      // Simple scared face (wide eyes, small mouth)
+      const eyeGeo = new THREE.SphereGeometry(0.04, 8, 8);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+      const pupilGeo = new THREE.SphereGeometry(0.02, 8, 8);
+      const pupilMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
+      const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+      leftEye.position.set(-0.12, 1.53, 0.33);
+      stevie.add(leftEye);
+
+      const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+      rightEye.position.set(0.12, 1.53, 0.33);
+      stevie.add(rightEye);
+
+      const leftPupil = new THREE.Mesh(pupilGeo, pupilMat);
+      leftPupil.position.set(-0.12, 1.53, 0.36);
+      stevie.add(leftPupil);
+
+      const rightPupil = new THREE.Mesh(pupilGeo, pupilMat);
+      rightPupil.position.set(0.12, 1.53, 0.36);
+      stevie.add(rightPupil);
+
+      const mouthGeo = new THREE.BoxGeometry(0.12, 0.03, 0.01);
+      const mouthMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+      const mouth = new THREE.Mesh(mouthGeo, mouthMat);
+      mouth.position.set(0, 1.42, 0.33);
+      stevie.add(mouth);
+
+      // Slight hunch / curl
+      stevie.position.set(0, 0.15, 0);
+      stevie.rotation.x = -0.15;
+
+      scene.add(stevie);
+
+      // Slight camera offset to look down at Stevie
+      camera.position.set(0, 2.2, 4.5);
+      camera.lookAt(0, 1.0, 0.2);
+
+      return scene;
     }
-  }
 
-  function maybeSpawnDemon() {
-    const chance = Math.random();
-    if (chance < 0.4) {
-      demonVisible = true;
-      demonEl.style.display = 'block';
-    }
-  }
+    // ====== CREATE ALL SCENES ======
+    scenes.bedroom = createBedroomScene();
+    scenes.hallway = createRoomScene(0x181818);
+    scenes.kitchen = createRoomScene(0x303020);
+    scenes.bathroom = createRoomScene(0x202840);
+    scenes.living = createRoomScene(0x282020);
+    scenes.basement = createRoomScene(0x101010);
+    scenes.attic = createRoomScene(0x201820);
+    scenes.outside = createRoomScene(0x003322);
 
-  function triggerJumpscare() {
-    jumpscareEl.style.display = 'flex';
-    dialog.textContent = "STEVIE: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA—";
-    hint.textContent = "You shouldn't have clicked that.";
-    setTimeout(() => {
-      jumpscareEl.style.display = 'none';
-      setScene('bedroom');
-    }, 1500);
-  }
+    currentScene = scenes.bedroom;
 
-  navButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = btn.dataset.target;
+    // ====== ROOM BUTTON LOGIC ======
+    const buttons = document.querySelectorAll('.room-button');
 
-      if (target === 'bedroom') {
-        setScene('bedroom');
-        return;
-      }
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const room = btn.getAttribute('data-room');
 
-      if (target === 'kitchen') {
-        if (currentScene === 'kitchen' && !hasKey) {
-          hasKey = true;
-          dialog.textContent = "STEVIE: A key...? Under the dining table?";
-          hint.textContent = "Bathroom door might be open now.";
+        // Update active button
+        buttons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Switch scene
+        if (scenes[room]) {
+          currentScene = scenes[room];
+
+          // Adjust camera for non-bedroom scenes (simple default)
+          if (room !== 'bedroom') {
+            camera.position.set(0, 3, 7);
+            camera.lookAt(0, 1, 0);
+          } else {
+            camera.position.set(0, 2.2, 4.5);
+            camera.lookAt(0, 1.0, 0.2);
+          }
         }
-        setScene('kitchen');
-        return;
-      }
-
-      if (target === 'bathroomDoor') {
-        setScene('bathroomDoor');
-        if (hasKey) {
-          dialog.textContent = "STEVIE: Got it. Bathroom's open.";
-          hint.textContent = "Click Bathroom Door again to enter.";
-        }
-        return;
-      }
-
-      if (target === 'upstairs') {
-        setScene('upstairs');
-        return;
-      }
-
-      if (target === 'downstairs') {
-        setScene('downstairs');
-        return;
-      }
-
-      if (target === 'living') {
-        setScene('living');
-        return;
-      }
-
-      if (target === 'hallway') {
-        setScene('hallway');
-        return;
-      }
+      });
     });
-  });
 
-  roomBg.addEventListener('click', () => {
-    if (currentScene === 'bedroom' && !powerOn) {
-      powerOn = true;
-      demonActive = true;
-      dialog.textContent = "STEVIE: That should fix the generators... I guess.";
-      hint.textContent = "You should probably check the rest of the house.";
-      return;
-    }
-
-    if (currentScene === 'bathroomDoor' && hasKey) {
-      setScene('bathroom');
-      return;
-    }
-
-    if (demonVisible) {
-      triggerJumpscare();
-    }
-  });
-
-  skinButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const color = btn.dataset.skin;
-      handEl.style.background = color;
+    // ====== RESIZE HANDLER ======
+    window.addEventListener('resize', () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
     });
-  });
 
-  setScene('bedroom');
-</script>
+    // ====== ANIMATION LOOP ======
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(currentScene, camera);
+    }
+
+    animate();
+  </script>
 </body>
 </html>
