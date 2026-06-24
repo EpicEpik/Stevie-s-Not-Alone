@@ -17,7 +17,7 @@
         #game {
             width: 100vw;
             height: 100vh;
-            background: #1a1208;
+            background: #1a1208; /* dark brown room */
             position: relative;
         }
 
@@ -27,7 +27,10 @@
             width: 100%;
             height: 100%;
             text-align: center;
-            padding-top: 10%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
 
         #play-btn {
@@ -53,67 +56,87 @@
             font-size: 14px;
         }
 
+        /* SWITCH ON WALL */
+        #switch {
+            position: absolute;
+            top: 40%;
+            left: 15%;
+            width: 40px;
+            height: 80px;
+            background: #777;
+            border: 3px solid #222;
+            border-radius: 5px;
+        }
+
         /* HAND ANIMATION */
         #hand-anim {
             display: none;
             position: absolute;
-            bottom: -200px;
-            right: 20px;
-            width: 180px;
-            height: 180px;
+            bottom: 10%;
+            right: -200px;
+            width: 160px;
+            height: 160px;
             border-radius: 50%;
-            transition: bottom 0.4s ease;
+            transition: right 0.4s ease;
         }
 
-        .hand-up {
-            bottom: 20px;
+        .hand-reach {
+            right: 25%;
         }
 
         /* DEMON BUILT FROM SHAPES */
         #demon {
             display: none;
             position: absolute;
-            top: 10%;
+            top: 5%;
             left: 50%;
             transform: translateX(-50%);
             width: 200px;
-            height: 400px;
+            height: 420px;
+        }
+
+        /* Head */
+        #demon-head {
+            width: 160px;
+            height: 180px;
+            background: #000;
+            border-radius: 50% 50% 40% 40%;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Teeth */
+        #demon-teeth {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 40px;
+            background: repeating-linear-gradient(
+                to right,
+                white 0px,
+                white 10px,
+                black 10px,
+                black 20px
+            );
+            border-radius: 0 0 20px 20px;
         }
 
         /* Body */
         #demon-body {
             width: 120px;
             height: 260px;
-            background: #2e5f2e;
+            background: #000;
             border-radius: 60px;
             margin: 0 auto;
-            filter: brightness(0.8);
+            margin-top: -10px;
         }
 
-        /* Head */
-        #demon-head {
-            width: 160px;
-            height: 160px;
-            background: #3a7a3a;
-            border-radius: 50%;
-            margin: 0 auto;
-            margin-bottom: -20px;
-        }
-
-        /* Smile */
-        #demon-mouth {
-            width: 120px;
-            height: 40px;
-            background: #000;
-            border-radius: 0 0 60px 60px;
-            margin: 0 auto;
-            margin-top: -20px;
-        }
-
-        /* Eyes */
+        /* EYES */
         #eyes {
             position: absolute;
-            top: 35%;
+            top: 22%;
             left: 50%;
             transform: translateX(-50%);
             font-size: 80px;
@@ -169,13 +192,17 @@
             <p id="hint" class="hint">Press E to toggle the light switch.</p>
         </div>
 
+        <!-- SWITCH -->
+        <div id="switch"></div>
+
         <!-- HAND -->
         <div id="hand-anim"></div>
 
         <!-- DEMON -->
         <div id="demon">
-            <div id="demon-head"></div>
-            <div id="demon-mouth"></div>
+            <div id="demon-head">
+                <div id="demon-teeth"></div>
+            </div>
             <div id="demon-body"></div>
         </div>
 
@@ -221,10 +248,10 @@
 
                 const hand = document.getElementById("hand-anim");
                 hand.style.display = "block";
-                hand.classList.add("hand-up");
+                hand.classList.add("hand-reach");
 
                 setTimeout(() => {
-                    hand.classList.remove("hand-up");
+                    hand.classList.remove("hand-reach");
                 }, 400);
 
                 if (!lightTried) {
