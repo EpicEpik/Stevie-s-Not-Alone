@@ -2,21 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Stevie – Gritty Indie Title</title>
+  <title>HIS HOUSE – Stevie Title Screen</title>
+
   <style>
     html, body {
       margin: 0;
       padding: 0;
       overflow: hidden;
       background: radial-gradient(circle at top, #222 0%, #050505 60%, #000 100%);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: system-ui, sans-serif;
       color: #f5f5f5;
     }
 
+    /* UI ABOVE CANVAS */
     #ui-root {
       position: fixed;
       inset: 0;
+      z-index: 10;
       pointer-events: none;
+    }
+
+    canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
     }
 
     .title-screen, .game-screen {
@@ -26,12 +35,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      pointer-events: none;
       transition: opacity 0.4s ease;
-    }
-
-    .hidden {
-      opacity: 0;
       pointer-events: none;
     }
 
@@ -40,13 +44,16 @@
       pointer-events: auto;
     }
 
+    .hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
     .title-text {
       font-size: 3rem;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       margin-bottom: 1rem;
-      text-align: center;
-      color: #f0f0f0;
       text-shadow: 0 0 12px rgba(255,255,255,0.25);
     }
 
@@ -72,18 +79,6 @@
       pointer-events: auto;
       backdrop-filter: blur(6px);
       transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-      box-shadow: 0 0 18px rgba(0,0,0,0.7);
-    }
-
-    .play-button:hover {
-      background: linear-gradient(135deg, #ffffff44, #ffffff11);
-      transform: translateY(-1px);
-      box-shadow: 0 0 24px rgba(0,0,0,0.9);
-    }
-
-    .play-button:active {
-      transform: translateY(1px);
-      box-shadow: 0 0 10px rgba(0,0,0,0.7);
     }
 
     .skin-row {
@@ -99,13 +94,7 @@
       border-radius: 999px;
       border: 2px solid #ffffff55;
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(0,0,0,0.7);
       transition: transform 0.1s, box-shadow 0.15s, border-color 0.15s;
-    }
-
-    .skin-button:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 0 16px rgba(0,0,0,0.9);
     }
 
     .skin-button.active {
@@ -139,31 +128,29 @@
       text-align: right;
       max-width: 220px;
     }
-
-    canvas {
-      display: block;
-    }
   </style>
+
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
 </head>
+
 <body>
   <div id="ui-root">
     <div id="title-screen" class="title-screen visible">
       <div class="title-text">HIS HOUSE</div>
       <div class="subtitle">
-        Stevie is frozen mid-run, reaching into the dark.  
+        Stevie is frozen mid-run, reaching into the dark.<br>
         Pick his skin tone, then press PLAY.
       </div>
 
-      <!-- Stevie preview sits behind this in 3D; this is just UI -->
-      <button id="play-button" class="play-button">Play</button>
+      <button id="play-button" class="play-button">PLAY</button>
 
       <div class="skin-row">
-        <button id="skin-light" class="skin-button" title="Light"></button>
-        <button id="skin-tan" class="skin-button" title="Tan"></button>
-        <button id="skin-dark" class="skin-button" title="Dark"></button>
+        <button id="skin-light" class="skin-button"></button>
+        <button id="skin-tan" class="skin-button"></button>
+        <button id="skin-dark" class="skin-button"></button>
       </div>
+
       <div class="hint-text">
         Stevie above changes with these. Hand in-game matches too.
       </div>
@@ -172,90 +159,72 @@
     <div id="game-screen" class="game-screen hidden">
       <div class="game-screen-label">Bedroom – Prototype</div>
       <div class="light-switch-hint">
-        The hand you see near the switch uses the same skin tone you picked on the title screen.
+        The hand near the switch uses the same skin tone you picked.
       </div>
     </div>
   </div>
 
   <script>
-    // -----------------------------
-    // GLOBAL STATE
-    // -----------------------------
+    /* -----------------------------
+       GLOBALS
+    ----------------------------- */
     const SKIN_TONES = {
       light: 0xf6d2b1,
       tan:   0xc48c5e,
       dark:  0x73472d
     };
 
-    let currentSkinKey = 'tan'; // default
+    let currentSkinKey = "tan";
     let scene, camera, renderer, controls;
     let titleStevieGroup, gameStevieGroup, handMesh;
-    let isInGame = false;
 
-    // -----------------------------
-    // BASIC THREE.JS SETUP
-    // -----------------------------
+    /* -----------------------------
+       INIT THREE.JS
+    ----------------------------- */
     function initThree() {
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.setClearColor(0x000000, 1);
       document.body.appendChild(renderer.domElement);
 
       scene = new THREE.Scene();
 
-      camera = new THREE.PerspectiveCamera(
-        40,
-        window.innerWidth / window.innerHeight,
-        0.1,
-        100
-      );
-      camera.position.set(0, 1.4, 4);
+      camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0.2, 1.6, 3.3);
 
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.enablePan = false;
-      controls.minDistance = 2.5;
-      controls.maxDistance = 6;
-      controls.minPolarAngle = Math.PI * 0.15;
-      controls.maxPolarAngle = Math.PI * 0.45;
-      controls.target.set(0, 1.2, 0);
+      controls.target.set(0, 1.4, 0);
 
-      // Gritty lighting
-      const keyLight = new THREE.DirectionalLight(0xd8d8d8, 1.0);
-      keyLight.position.set(2, 4, 3);
-      keyLight.castShadow = true;
-      scene.add(keyLight);
+      /* LIGHTING */
+      const key = new THREE.DirectionalLight(0xd8d8d8, 1.0);
+      key.position.set(2, 4, 3);
+      scene.add(key);
 
-      const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
-      rimLight.position.set(-3, 3, -2);
-      scene.add(rimLight);
+      const rim = new THREE.DirectionalLight(0xffffff, 0.4);
+      rim.position.set(-3, 3, -2);
+      scene.add(rim);
 
-      const fillLight = new THREE.AmbientLight(0x202020, 0.8);
-      scene.add(fillLight);
+      scene.add(new THREE.AmbientLight(0x202020, 0.8));
 
-      // Ground plane (subtle)
-      const groundGeo = new THREE.PlaneGeometry(20, 20);
-      const groundMat = new THREE.MeshStandardMaterial({
-        color: 0x050505,
-        roughness: 1.0,
-        metalness: 0.0
-      });
-      const ground = new THREE.Mesh(groundGeo, groundMat);
+      /* GROUND */
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(20, 20),
+        new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1 })
+      );
       ground.rotation.x = -Math.PI / 2;
-      ground.position.y = 0;
-      ground.receiveShadow = true;
       scene.add(ground);
 
-      // Title Stevie + Game Stevie + Hand
+      /* MODELS */
       createTitleStevie();
-      createGameStevieAndHand();
+      createGameStevie();
 
-      window.addEventListener('resize', onWindowResize);
+      window.addEventListener("resize", onResize);
       animate();
     }
 
-    function onWindowResize() {
+    function onResize() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
@@ -267,384 +236,216 @@
       renderer.render(scene, camera);
     }
 
-    // -----------------------------
-    // MATERIAL HELPERS
-    // -----------------------------
-    function createSkinMaterial(colorHex) {
-      return new THREE.MeshStandardMaterial({
-        color: colorHex,
-        roughness: 0.6,
-        metalness: 0.0
-      });
+    /* -----------------------------
+       MATERIAL HELPERS
+    ----------------------------- */
+    function skinMat(color) {
+      return new THREE.MeshStandardMaterial({ color, roughness: 0.6 });
     }
 
-    function createHairMaterial() {
-      return new THREE.MeshStandardMaterial({
-        color: 0x111111,
-        roughness: 0.9,
-        metalness: 0.0
-      });
+    function hairMat() {
+      return new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
     }
 
-    function createGlassesMaterial() {
-      return new THREE.MeshStandardMaterial({
-        color: 0x222222,
-        roughness: 0.3,
-        metalness: 0.7
-      });
+    function glassesMat() {
+      return new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.7 });
     }
 
-    // -----------------------------
-    // HIGHER-DETAIL STEVIE MODEL (PRIMITIVE-BASED)
-    // -----------------------------
-    function buildStevieModel(skinColor) {
-      const group = new THREE.Group();
+    /* -----------------------------
+       STEVIE MODEL (HIGH DETAIL)
+    ----------------------------- */
+    function buildStevie(color) {
+      const g = new THREE.Group();
+      const skin = skinMat(color);
 
-      const skinMat = createSkinMaterial(skinColor);
-      const hairMat = createHairMaterial();
-      const glassesMat = createGlassesMaterial();
-      const clothesMat = new THREE.MeshStandardMaterial({
-        color: 0x30364a,
-        roughness: 0.8,
-        metalness: 0.0
-      });
-      const shortsMat = new THREE.MeshStandardMaterial({
-        color: 0x202020,
-        roughness: 0.9,
-        metalness: 0.0
-      });
-      const shoeMat = new THREE.MeshStandardMaterial({
-        color: 0x111111,
-        roughness: 0.9,
-        metalness: 0.0
-      });
-
-      // Torso
-      const torsoGeo = new THREE.BoxGeometry(0.6, 0.9, 0.25);
-      const torso = new THREE.Mesh(torsoGeo, clothesMat);
-      torso.position.set(0, 1.1, 0);
-      torso.castShadow = true;
-      group.add(torso);
-
-      // Hips / shorts
-      const hipsGeo = new THREE.BoxGeometry(0.5, 0.3, 0.25);
-      const hips = new THREE.Mesh(hipsGeo, shortsMat);
-      hips.position.set(0, 0.7, 0);
-      hips.castShadow = true;
-      group.add(hips);
-
-      // Legs
-      const legGeo = new THREE.BoxGeometry(0.18, 0.6, 0.2);
-
-      const leftLeg = new THREE.Mesh(legGeo, shortsMat);
-      leftLeg.position.set(-0.15, 0.25, 0);
-      leftLeg.castShadow = true;
-      group.add(leftLeg);
-
-      const rightLeg = new THREE.Mesh(legGeo, shortsMat);
-      rightLeg.position.set(0.15, 0.25, 0);
-      rightLeg.castShadow = true;
-      group.add(rightLeg);
-
-      // Shoes
-      const shoeGeo = new THREE.BoxGeometry(0.22, 0.12, 0.35);
-      const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
-      leftShoe.position.set(-0.15, -0.05, 0.08);
-      leftShoe.castShadow = true;
-      group.add(leftShoe);
-
-      const rightShoe = new THREE.Mesh(shoeGeo, shoeMat);
-      rightShoe.position.set(0.15, -0.05, 0.08);
-      rightShoe.castShadow = true;
-      group.add(rightShoe);
-
-      // Neck
-      const neckGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.12, 10);
-      const neck = new THREE.Mesh(neckGeo, skinMat);
-      neck.position.set(0, 1.55, 0);
-      neck.castShadow = true;
-      group.add(neck);
-
-      // Head
-      const headGeo = new THREE.SphereGeometry(0.28, 24, 24);
-      const head = new THREE.Mesh(headGeo, skinMat);
+      /* HEAD */
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 24, 24), skin);
       head.position.set(0, 1.85, 0.02);
-      head.castShadow = true;
-      group.add(head);
+      g.add(head);
 
-      // Hair (messy)
-      const hairCapGeo = new THREE.SphereGeometry(0.3, 24, 24, 0, Math.PI * 2, 0, Math.PI / 1.6);
-      const hairCap = new THREE.Mesh(hairCapGeo, hairMat);
-      hairCap.position.set(0, 1.9, 0);
-      hairCap.castShadow = true;
-      group.add(hairCap);
+      /* HAIR */
+      const hair = new THREE.Mesh(
+        new THREE.SphereGeometry(0.3, 24, 24, 0, Math.PI * 2, 0, Math.PI / 1.6),
+        hairMat()
+      );
+      hair.position.set(0, 1.9, 0);
+      g.add(hair);
 
-      const hairStrandGeo = new THREE.BoxGeometry(0.08, 0.18, 0.02);
-      for (let i = 0; i < 5; i++) {
-        const strand = new THREE.Mesh(hairStrandGeo, hairMat);
-        strand.position.set(
-          (Math.random() - 0.5) * 0.25,
-          1.95 + Math.random() * 0.05,
-          0.18 + Math.random() * 0.02
-        );
-        strand.rotation.z = (Math.random() - 0.5) * 0.6;
-        strand.castShadow = true;
-        group.add(strand);
-      }
+      /* TORSO */
+      const torso = new THREE.Mesh(
+        new THREE.BoxGeometry(0.6, 0.9, 0.25),
+        new THREE.MeshStandardMaterial({ color: 0x30364a })
+      );
+      torso.position.set(0, 1.1, 0);
+      g.add(torso);
 
-      // Glasses frame
-      const glassesFrameGeo = new THREE.BoxGeometry(0.6, 0.12, 0.02);
-      const glassesFrame = new THREE.Mesh(glassesFrameGeo, glassesMat);
-      glassesFrame.position.set(0, 1.85, 0.24);
-      glassesFrame.castShadow = true;
-      group.add(glassesFrame);
-
-      // Glasses lenses (just subtle)
-      const lensGeo = new THREE.BoxGeometry(0.25, 0.16, 0.01);
-      const lensMat = new THREE.MeshStandardMaterial({
-        color: 0x777777,
-        roughness: 0.1,
-        metalness: 0.0,
-        transparent: true,
-        opacity: 0.25
-      });
-      const leftLens = new THREE.Mesh(lensGeo, lensMat);
-      leftLens.position.set(-0.16, 1.85, 0.245);
-      group.add(leftLens);
-
-      const rightLens = new THREE.Mesh(lensGeo, lensMat);
-      rightLens.position.set(0.16, 1.85, 0.245);
-      group.add(rightLens);
-
-      // "Crack" hint – a tiny diagonal bar
-      const crackGeo = new THREE.BoxGeometry(0.02, 0.18, 0.01);
-      const crack = new THREE.Mesh(crackGeo, new THREE.MeshStandardMaterial({
-        color: 0xcccccc,
-        roughness: 0.3,
-        metalness: 0.0
-      }));
-      crack.position.set(0.05, 1.85, 0.246);
-      crack.rotation.z = 0.6;
-      group.add(crack);
-
-      // Arms – full forward reach, scared run
-      const upperArmGeo = new THREE.BoxGeometry(0.14, 0.4, 0.14);
-      const forearmGeo = new THREE.BoxGeometry(0.12, 0.35, 0.12);
+      /* ARMS – FULL FORWARD REACH */
+      const armGeo = new THREE.BoxGeometry(0.14, 0.4, 0.14);
+      const foreGeo = new THREE.BoxGeometry(0.12, 0.35, 0.12);
       const handGeo = new THREE.BoxGeometry(0.16, 0.12, 0.16);
 
-      // Left arm
-      const leftUpperArm = new THREE.Mesh(upperArmGeo, skinMat);
-      leftUpperArm.position.set(-0.32, 1.25, 0.05);
-      leftUpperArm.rotation.z = Math.PI * 0.15;
-      leftUpperArm.rotation.x = -Math.PI * 0.35;
-      leftUpperArm.castShadow = true;
-      group.add(leftUpperArm);
+      const Larm = new THREE.Mesh(armGeo, skin);
+      Larm.position.set(-0.32, 1.25, 0.05);
+      Larm.rotation.x = -1.1;
+      g.add(Larm);
 
-      const leftForearm = new THREE.Mesh(forearmGeo, skinMat);
-      leftForearm.position.set(-0.42, 1.0, 0.35);
-      leftForearm.rotation.x = -Math.PI * 0.1;
-      leftForearm.castShadow = true;
-      group.add(leftForearm);
+      const Lfore = new THREE.Mesh(foreGeo, skin);
+      Lfore.position.set(-0.42, 1.0, 0.35);
+      g.add(Lfore);
 
-      const leftHand = new THREE.Mesh(handGeo, skinMat);
-      leftHand.position.set(-0.42, 0.9, 0.6);
-      leftHand.castShadow = true;
-      group.add(leftHand);
+      const Lhand = new THREE.Mesh(handGeo, skin);
+      Lhand.position.set(-0.42, 0.9, 0.6);
+      g.add(Lhand);
 
-      // Right arm
-      const rightUpperArm = new THREE.Mesh(upperArmGeo, skinMat);
-      rightUpperArm.position.set(0.32, 1.25, 0.05);
-      rightUpperArm.rotation.z = -Math.PI * 0.15;
-      rightUpperArm.rotation.x = -Math.PI * 0.35;
-      rightUpperArm.castShadow = true;
-      group.add(rightUpperArm);
+      const Rarm = new THREE.Mesh(armGeo, skin);
+      Rarm.position.set(0.32, 1.25, 0.05);
+      Rarm.rotation.x = -1.1;
+      g.add(Rarm);
 
-      const rightForearm = new THREE.Mesh(forearmGeo, skinMat);
-      rightForearm.position.set(0.42, 1.0, 0.35);
-      rightForearm.rotation.x = -Math.PI * 0.1;
-      rightForearm.castShadow = true;
-      group.add(rightForearm);
+      const Rfore = new THREE.Mesh(foreGeo, skin);
+      Rfore.position.set(0.42, 1.0, 0.35);
+      g.add(Rfore);
 
-      const rightHand = new THREE.Mesh(handGeo, skinMat);
-      rightHand.position.set(0.42, 0.9, 0.6);
-      rightHand.castShadow = true;
-      group.add(rightHand);
+      const Rhand = new THREE.Mesh(handGeo, skin);
+      Rhand.position.set(0.42, 0.9, 0.6);
+      g.add(Rhand);
 
-      // Pose: scared run, leaning forward, facing left
-      group.rotation.y = Math.PI * 0.5; // face left
-      group.rotation.x = -Math.PI * 0.05;
-      group.position.y = 0;
+      /* POSE */
+      g.rotation.y = Math.PI * 0.35;
+      g.position.y = 0;
 
-      // Slight leg offset to imply run
-      leftLeg.position.z = 0.05;
-      rightLeg.position.z = -0.05;
-      leftLeg.rotation.x = 0.25;
-      rightLeg.rotation.x = -0.25;
-
-      return group;
+      return g;
     }
 
-    // -----------------------------
-    // TITLE STEVIE (PREVIEW)
-    // -----------------------------
+    /* -----------------------------
+       TITLE STEVIE
+    ----------------------------- */
     function createTitleStevie() {
-      titleStevieGroup = buildStevieModel(SKIN_TONES[currentSkinKey]);
-      titleStevieGroup.position.set(0, 0, 0);
+      titleStevieGroup = buildStevie(SKIN_TONES[currentSkinKey]);
       scene.add(titleStevieGroup);
 
-      // Move camera to frame him nicely for title
-      camera.position.set(0.2, 1.6, 3.3);
-      controls.target.set(0, 1.4, 0);
-      controls.update();
+      /* FORCE CAMERA TO SEE HIM */
+      setTimeout(() => {
+        camera.position.set(0.2, 1.6, 3.3);
+        controls.target.set(0, 1.4, 0);
+        controls.update();
+      }, 50);
     }
 
-    function updateTitleStevieSkin() {
-      if (!titleStevieGroup) return;
+    function updateTitleSkin() {
       const newColor = SKIN_TONES[currentSkinKey];
-      titleStevieGroup.traverse(obj => {
-        if (obj.isMesh && obj.material && obj.material.color) {
-          // crude: recolor anything that looks like skin by checking approximate color
-          const c = obj.material.color;
-          const isSkinLike =
-            (c.r > 0.7 && c.g > 0.6 && c.b > 0.5) ||
-            (c.r > 0.5 && c.g > 0.4 && c.b > 0.3);
-          if (isSkinLike) {
-            obj.material.color.setHex(newColor);
-          }
+      titleStevieGroup.traverse(m => {
+        if (m.isMesh && m.material && m.material.color) {
+          if (m.material.color.r > 0.4) m.material.color.setHex(newColor);
         }
       });
     }
 
-    // -----------------------------
-    // GAME STEVIE + HAND
-    // -----------------------------
-    function createGameStevieAndHand() {
-      // Game Stevie (same model, different position)
-      gameStevieGroup = buildStevieModel(SKIN_TONES[currentSkinKey]);
-      gameStevieGroup.position.set(-1.0, 0, -1.5);
+    /* -----------------------------
+       GAME STEVIE + HAND
+    ----------------------------- */
+    function createGameStevie() {
+      gameStevieGroup = buildStevie(SKIN_TONES[currentSkinKey]);
+      gameStevieGroup.position.set(-1, 0, -1.5);
       gameStevieGroup.visible = false;
       scene.add(gameStevieGroup);
 
-      // Simple "bedroom" hint: a wall and a light switch area
-      const wallGeo = new THREE.PlaneGeometry(6, 3);
-      const wallMat = new THREE.MeshStandardMaterial({
-        color: 0x111318,
-        roughness: 0.9,
-        metalness: 0.0
-      });
-      const wall = new THREE.Mesh(wallGeo, wallMat);
+      /* WALL */
+      const wall = new THREE.Mesh(
+        new THREE.PlaneGeometry(6, 3),
+        new THREE.MeshStandardMaterial({ color: 0x111318 })
+      );
       wall.position.set(0, 1.5, -3);
-      wall.receiveShadow = true;
       scene.add(wall);
 
-      const switchPlateGeo = new THREE.BoxGeometry(0.25, 0.4, 0.02);
-      const switchPlateMat = new THREE.MeshStandardMaterial({
-        color: 0xdddddd,
-        roughness: 0.6,
-        metalness: 0.0
-      });
-      const switchPlate = new THREE.Mesh(switchPlateGeo, switchPlateMat);
-      switchPlate.position.set(1.2, 1.4, -2.99);
-      switchPlate.castShadow = true;
-      scene.add(switchPlate);
-
-      // Hand near the switch
-      const handGeo = new THREE.BoxGeometry(0.25, 0.12, 0.18);
-      handMesh = new THREE.Mesh(handGeo, createSkinMaterial(SKIN_TONES[currentSkinKey]));
+      /* HAND */
+      handMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.25, 0.12, 0.18),
+        skinMat(SKIN_TONES[currentSkinKey])
+      );
       handMesh.position.set(1.0, 1.35, -2.7);
-      handMesh.castShadow = true;
       scene.add(handMesh);
     }
 
-    function updateGameStevieSkin() {
-      if (!gameStevieGroup) return;
+    function updateGameSkin() {
       const newColor = SKIN_TONES[currentSkinKey];
-      gameStevieGroup.traverse(obj => {
-        if (obj.isMesh && obj.material && obj.material.color) {
-          const c = obj.material.color;
-          const isSkinLike =
-            (c.r > 0.7 && c.g > 0.6 && c.b > 0.5) ||
-            (c.r > 0.5 && c.g > 0.4 && c.b > 0.3);
-          if (isSkinLike) {
-            obj.material.color.setHex(newColor);
-          }
+      gameStevieGroup.traverse(m => {
+        if (m.isMesh && m.material && m.material.color) {
+          if (m.material.color.r > 0.4) m.material.color.setHex(newColor);
         }
       });
-      if (handMesh && handMesh.material && handMesh.material.color) {
-        handMesh.material.color.setHex(newColor);
-      }
+      handMesh.material.color.setHex(newColor);
     }
 
-    // -----------------------------
-    // UI WIRES
-    // -----------------------------
+    /* -----------------------------
+       UI LOGIC
+    ----------------------------- */
     function initUI() {
-      const titleScreen = document.getElementById('title-screen');
-      const gameScreen = document.getElementById('game-screen');
-      const playButton = document.getElementById('play-button');
+      const titleScreen = document.getElementById("title-screen");
+      const gameScreen = document.getElementById("game-screen");
+      const playButton = document.getElementById("play-button");
 
-      const skinLightBtn = document.getElementById('skin-light');
-      const skinTanBtn   = document.getElementById('skin-tan');
-      const skinDarkBtn  = document.getElementById('skin-dark');
+      const lightBtn = document.getElementById("skin-light");
+      const tanBtn   = document.getElementById("skin-tan");
+      const darkBtn  = document.getElementById("skin-dark");
 
-      // Set button colors
-      skinLightBtn.style.background = '#f6d2b1';
-      skinTanBtn.style.background   = '#c48c5e';
-      skinDarkBtn.style.background  = '#73472d';
+      lightBtn.style.background = "#f6d2b1";
+      tanBtn.style.background   = "#c48c5e";
+      darkBtn.style.background  = "#73472d";
 
-      function setActiveSkinButton(key) {
-        skinLightBtn.classList.remove('active');
-        skinTanBtn.classList.remove('active');
-        skinDarkBtn.classList.remove('active');
-        if (key === 'light') skinLightBtn.classList.add('active');
-        if (key === 'tan')   skinTanBtn.classList.add('active');
-        if (key === 'dark')  skinDarkBtn.classList.add('active');
+      function setActive(key) {
+        lightBtn.classList.remove("active");
+        tanBtn.classList.remove("active");
+        darkBtn.classList.remove("active");
+        if (key === "light") lightBtn.classList.add("active");
+        if (key === "tan")   tanBtn.classList.add("active");
+        if (key === "dark")  darkBtn.classList.add("active");
       }
 
-      setActiveSkinButton(currentSkinKey);
+      setActive(currentSkinKey);
 
-      skinLightBtn.addEventListener('click', () => {
-        currentSkinKey = 'light';
-        setActiveSkinButton('light');
-        updateTitleStevieSkin();
-        updateGameStevieSkin();
-      });
+      lightBtn.onclick = () => {
+        currentSkinKey = "light";
+        setActive("light");
+        updateTitleSkin();
+        updateGameSkin();
+      };
 
-      skinTanBtn.addEventListener('click', () => {
-        currentSkinKey = 'tan';
-        setActiveSkinButton('tan');
-        updateTitleStevieSkin();
-        updateGameStevieSkin();
-      });
+      tanBtn.onclick = () => {
+        currentSkinKey = "tan";
+        setActive("tan");
+        updateTitleSkin();
+        updateGameSkin();
+      };
 
-      skinDarkBtn.addEventListener('click', () => {
-        currentSkinKey = 'dark';
-        setActiveSkinButton('dark');
-        updateTitleStevieSkin();
-        updateGameStevieSkin();
-      });
+      darkBtn.onclick = () => {
+        currentSkinKey = "dark";
+        setActive("dark");
+        updateTitleSkin();
+        updateGameSkin();
+      };
 
-      playButton.addEventListener('click', () => {
-        isInGame = true;
-        titleScreen.classList.remove('visible');
-        titleScreen.classList.add('hidden');
-        gameScreen.classList.remove('hidden');
-        gameScreen.classList.add('visible');
+      playButton.onclick = () => {
+        titleScreen.classList.remove("visible");
+        titleScreen.classList.add("hidden");
 
-        // Hide title Stevie, show game Stevie, adjust camera
-        if (titleStevieGroup) titleStevieGroup.visible = false;
-        if (gameStevieGroup) {
+        setTimeout(() => {
+          gameScreen.classList.remove("hidden");
+          gameScreen.classList.add("visible");
+
+          titleStevieGroup.visible = false;
           gameStevieGroup.visible = true;
-        }
-        camera.position.set(0.3, 1.6, 4.5);
-        controls.target.set(0, 1.4, -2.0);
-        controls.update();
-      });
+
+          camera.position.set(0.3, 1.6, 4.5);
+          controls.target.set(0, 1.4, -2.0);
+          controls.update();
+        }, 400);
+      };
     }
 
-    // -----------------------------
-    // BOOT
-    // -----------------------------
+    /* -----------------------------
+       BOOT
+    ----------------------------- */
     initThree();
     initUI();
   </script>
