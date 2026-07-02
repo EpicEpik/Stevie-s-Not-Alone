@@ -23,7 +23,9 @@
       display: block;
     }
 
-    #title-screen {
+    /* MAIN MENU */
+
+    #main-menu {
       position: fixed;
       inset: 0;
       z-index: 10;
@@ -31,62 +33,121 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      pointer-events: auto;
-      transition: opacity 0.3s ease;
-      background: radial-gradient(circle at top, #111 0%, #000 60%, #000 100%);
-    }
-
-    #title-screen.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .title-text {
-      font-size: 2.6rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-      text-align: center;
+      background:
+        radial-gradient(circle at top, #222 0%, #000 60%, #000 100%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255,255,255,0.03) 0px,
+          rgba(255,255,255,0.03) 1px,
+          rgba(0,0,0,0.03) 2px,
+          rgba(0,0,0,0.03) 3px
+        );
       color: #fff;
     }
 
-    .subtitle {
-      font-size: 0.95rem;
-      opacity: 0.75;
-      margin-bottom: 2rem;
+    .menu-title {
+      font-size: 2.4rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
       text-align: center;
-      max-width: 420px;
-      color: #ddd;
     }
 
-    .play-button {
-      padding: 0.8rem 2.6rem;
+    .menu-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      font-size: 1rem;
+    }
+
+    .menu-option {
+      cursor: pointer;
+      color: #ccc;
+    }
+
+    .menu-option:hover {
+      color: #fff;
+    }
+
+    .menu-option.active {
+      color: #fff;
+    }
+
+    .menu-option.active::before {
+      content: ">> ";
+      color: #fff;
+    }
+
+    .menu-hint {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      text-align: center;
+    }
+
+    /* SETTINGS */
+
+    #settings-menu {
+      position: fixed;
+      inset: 0;
+      z-index: 11;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.9);
+      color: #fff;
+    }
+
+    .settings-panel {
+      background: #111;
+      border: 1px solid #444;
+      padding: 1.5rem 2rem;
+      border-radius: 8px;
+      min-width: 260px;
+    }
+
+    .settings-title {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .settings-row {
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .settings-row label {
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+
+    .settings-row input[type="range"] {
+      width: 100%;
+    }
+
+    .settings-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .settings-button {
+      padding: 0.4rem 1.2rem;
       border-radius: 999px;
       border: 1px solid #ffffff55;
       background: #ffffff10;
       color: #fff;
-      font-size: 0.9rem;
-      letter-spacing: 0.16em;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
     }
 
-    .play-button:hover {
+    .settings-button:hover {
       background: #ffffff25;
-      transform: translateY(-1px);
-    }
-
-    .hint {
-      position: fixed;
-      bottom: 1rem;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 0.8rem;
-      opacity: 0.7;
-      text-align: center;
-      pointer-events: none;
-      color: #ccc;
     }
   </style>
 </head>
@@ -94,19 +155,43 @@
 <body>
   <div id="container"></div>
 
-  <div id="title-screen">
-    <div class="title-text">STEVIE'S NOT ALONE: DEMO</div>
-    <div class="subtitle">
-      A prototype of Stevie’s house.<br>
-      Press PLAY to enter first person.
+  <!-- MAIN MENU -->
+  <div id="main-menu">
+    <div class="menu-title">STEVIE'S NOT ALONE</div>
+    <div class="menu-options">
+      <div id="menu-new" class="menu-option active">New Game</div>
+      <div id="menu-continue" class="menu-option">Continue</div>
+      <div id="menu-settings" class="menu-option">Settings</div>
+      <div id="menu-quit" class="menu-option">Quit</div>
     </div>
-    <button id="play-button" class="play-button">PLAY</button>
-    <div class="hint">Use WASD to move. Arrow keys to look. E to interact.</div>
+    <div class="menu-hint">
+      Use WASD to move, Arrow keys to look, E to interact.<br>
+      New Game starts in Stevie’s bedroom.
+    </div>
+  </div>
+
+  <!-- SETTINGS MENU -->
+  <div id="settings-menu">
+    <div class="settings-panel">
+      <div class="settings-title">Settings</div>
+
+      <div class="settings-row">
+        <label for="master-volume">Master Volume</label>
+        <input id="master-volume" type="range" min="0" max="100" value="80">
+      </div>
+
+      <div class="settings-row">
+        <label for="jumpscare-volume">Jumpscare Volume</label>
+        <input id="jumpscare-volume" type="range" min="0" max="100" value="60">
+      </div>
+
+      <div class="settings-buttons">
+        <button id="settings-back" class="settings-button">Back</button>
+      </div>
+    </div>
   </div>
 
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-  <script src="https://threejs.org/examples/js/loaders/FontLoader.js"></script>
-  <script src="https://threejs.org/examples/js/geometries/TextGeometry.js"></script>
   <script>
     const container = document.getElementById('container');
 
@@ -140,23 +225,16 @@
 
     let hasBathroomKey = false;
 
+    // Audio settings (no sounds yet, but ready)
+    let masterVolume = 0.8;
+    let jumpscareVolume = 0.6;
+
     // DOOR OBJECTS
     let bedroomDoor, hallwayDoorBathroom, hallwayDoorParents, hallwayDoorKitchen;
     let keyMesh;
 
     // SCENES
     let bedroomScene, hallwayScene, kitchenScene, bathroomScene;
-
-    // FONT
-    let gameFont = null;
-
-    const fontLoader = new THREE.FontLoader();
-    fontLoader.load(
-      "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
-      (font) => {
-        gameFont = font;
-      }
-    );
 
     // ---------------------------------------
     // INPUT
@@ -267,13 +345,13 @@
       return door;
     }
 
-    function makePlaque(text) {
+    function makePlaque(color = 0x7a4a2a) {
       const plaqueGroup = new THREE.Group();
 
       const plaque = new THREE.Mesh(
         new THREE.BoxGeometry(0.9, 0.45, 0.05),
         new THREE.MeshStandardMaterial({
-          color: 0x7a4a2a,
+          color,
           roughness: 0.5,
           metalness: 0.1
         })
@@ -305,41 +383,24 @@
       ropeRight.position.x = 0.25;
       plaqueGroup.add(ropeRight);
 
-      if (gameFont) {
-        const textGeo = new THREE.TextGeometry(text, {
-          font: gameFont,
-          size: 0.12,
-          height: 0.01
-        });
-        textGeo.center();
-        const textMesh = new THREE.Mesh(
-          textGeo,
-          new THREE.MeshBasicMaterial({ color: 0x000000 })
-        );
-        textMesh.position.set(0, 0, 0.08);
-        plaqueGroup.add(textMesh);
-      }
-
       return plaqueGroup;
     }
 
     function addDoorPlaques() {
-      if (!gameFont) return;
-
       if (bedroomDoor) {
-        const steviePlaque = makePlaque("Stevie's Room! :D");
+        const steviePlaque = makePlaque(0x7a4a2a);
         steviePlaque.position.set(0, 0.6, 0.09);
         bedroomDoor.add(steviePlaque);
       }
 
       if (hallwayDoorBathroom) {
-        const bathPlaque = makePlaque("Bathroom");
+        const bathPlaque = makePlaque(0x7a4a2a);
         bathPlaque.position.set(0, 0.6, 0.09);
         hallwayDoorBathroom.add(bathPlaque);
       }
 
       if (hallwayDoorParents) {
-        const parentsPlaque = makePlaque("MARY AND ROBERT");
+        const parentsPlaque = makePlaque(0x7a4a2a);
         parentsPlaque.position.set(0, 0.6, 0.09);
         hallwayDoorParents.add(parentsPlaque);
       }
@@ -556,17 +617,62 @@
 
     animate();
 
-    const titleScreen = document.getElementById('title-screen');
-    const playButton = document.getElementById('play-button');
+    // ---------------------------------------
+    // MENU LOGIC
+    // ---------------------------------------
+    const mainMenu = document.getElementById('main-menu');
+    const settingsMenu = document.getElementById('settings-menu');
 
-    playButton.addEventListener('click', () => {
-      titleScreen.classList.add('hidden');
+    const menuNew = document.getElementById('menu-new');
+    const menuContinue = document.getElementById('menu-continue');
+    const menuSettings = document.getElementById('menu-settings');
+    const menuQuit = document.getElementById('menu-quit');
+
+    const masterSlider = document.getElementById('master-volume');
+    const jumpscareSlider = document.getElementById('jumpscare-volume');
+    const settingsBack = document.getElementById('settings-back');
+
+    function startGameNew() {
+      mainMenu.style.display = 'none';
+      settingsMenu.style.display = 'none';
       inFirstPerson = true;
       yaw = 0;
-      camera.position.set(0, 1.6, 0);
-
-      // PLAY FIX: add plaques only after scenes & doors exist
+      hasBathroomKey = false;
+      keyMesh.visible = true;
+      switchTo("bedroom");
       addDoorPlaques();
+    }
+
+    function startGameContinue() {
+      mainMenu.style.display = 'none';
+      settingsMenu.style.display = 'none';
+      inFirstPerson = true;
+      yaw = 0;
+      switchTo(currentSceneName || "bedroom");
+      addDoorPlaques();
+    }
+
+    menuNew.addEventListener('click', startGameNew);
+    menuContinue.addEventListener('click', startGameContinue);
+
+    menuSettings.addEventListener('click', () => {
+      settingsMenu.style.display = 'flex';
+    });
+
+    menuQuit.addEventListener('click', () => {
+      alert("You can't actually quit from here yet, but nice try.");
+    });
+
+    settingsBack.addEventListener('click', () => {
+      settingsMenu.style.display = 'none';
+    });
+
+    masterSlider.addEventListener('input', () => {
+      masterVolume = masterSlider.value / 100;
+    });
+
+    jumpscareSlider.addEventListener('input', () => {
+      jumpscareVolume = jumpscareSlider.value / 100;
     });
 
     window.addEventListener('resize', () => {
