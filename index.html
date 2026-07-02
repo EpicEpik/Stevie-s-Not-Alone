@@ -9,12 +9,11 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background: radial-gradient(circle at top, #222 0%, #050505 60%, #000 100%);
+      background: radial-gradient(circle at top, #111 0%, #050505 60%, #000 100%);
       font-family: system-ui, sans-serif;
       color: #f5f5f5;
     }
 
-    /* UI ABOVE CANVAS */
     #ui-root {
       position: fixed;
       inset: 0;
@@ -51,7 +50,7 @@
 
     .title-text {
       font-size: 3rem;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
       margin-bottom: 1rem;
       text-shadow: 0 0 12px rgba(255,255,255,0.25);
@@ -79,34 +78,6 @@
       pointer-events: auto;
       backdrop-filter: blur(6px);
       transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
-    }
-
-    .skin-row {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 1.25rem;
-      pointer-events: auto;
-    }
-
-    .skin-button {
-      width: 42px;
-      height: 42px;
-      border-radius: 999px;
-      border: 2px solid #ffffff55;
-      cursor: pointer;
-      transition: transform 0.1s, box-shadow 0.15s, border-color 0.15s;
-    }
-
-    .skin-button.active {
-      border-color: #ffffffdd;
-      box-shadow: 0 0 18px rgba(255,255,255,0.35);
-    }
-
-    .hint-text {
-      margin-top: 0.5rem;
-      font-size: 0.8rem;
-      opacity: 0.7;
-      text-align: center;
     }
 
     .game-screen-label {
@@ -137,44 +108,29 @@
 <body>
   <div id="ui-root">
     <div id="title-screen" class="title-screen visible">
-      <div class="title-text">Stevie's Not Alone</div>
+      <div class="title-text">STEVIE'S NOT ALONE</div>
       <div class="subtitle">
         Stevie is frozen mid-run, reaching into the dark.<br>
-        Pick his skin tone, then press PLAY.
+        Press PLAY to continue.
       </div>
 
       <button id="play-button" class="play-button">PLAY</button>
-
-      <div class="skin-row">
-        <button id="skin-light" class="skin-button"></button>
-        <button id="skin-tan" class="skin-button"></button>
-        <button id="skin-dark" class="skin-button"></button>
-      </div>
-
-      <div class="hint-text">
-        Stevie above changes with these. Hand in-game matches too.
-      </div>
     </div>
 
     <div id="game-screen" class="game-screen hidden">
       <div class="game-screen-label">Bedroom – Prototype</div>
       <div class="light-switch-hint">
-        The hand near the switch uses the same skin tone you picked.
+        The hand near the switch is Stevie's.
       </div>
     </div>
   </div>
 
   <script>
     /* -----------------------------
-       GLOBALS
+       CONSTANTS
     ----------------------------- */
-    const SKIN_TONES = {
-      light: 0xf6d2b1,
-      tan:   0xc48c5e,
-      dark:  0x73472d
-    };
+    const STEVIE_SKIN = 0xf8e6da; // ghostly pale
 
-    let currentSkinKey = "tan";
     let scene, camera, renderer, controls;
     let titleStevieGroup, gameStevieGroup, handMesh;
 
@@ -239,8 +195,8 @@
     /* -----------------------------
        MATERIAL HELPERS
     ----------------------------- */
-    function skinMat(color) {
-      return new THREE.MeshStandardMaterial({ color, roughness: 0.6 });
+    function skinMat() {
+      return new THREE.MeshStandardMaterial({ color: STEVIE_SKIN, roughness: 0.6 });
     }
 
     function hairMat() {
@@ -252,11 +208,11 @@
     }
 
     /* -----------------------------
-       STEVIE MODEL (HIGH DETAIL)
+       STEVIE MODEL
     ----------------------------- */
-    function buildStevie(color) {
+    function buildStevie() {
       const g = new THREE.Group();
-      const skin = skinMat(color);
+      const skin = skinMat();
 
       /* HEAD */
       const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 24, 24), skin);
@@ -279,7 +235,7 @@
       torso.position.set(0, 1.1, 0);
       g.add(torso);
 
-      /* ARMS – FULL FORWARD REACH */
+      /* ARMS */
       const armGeo = new THREE.BoxGeometry(0.14, 0.4, 0.14);
       const foreGeo = new THREE.BoxGeometry(0.12, 0.35, 0.12);
       const handGeo = new THREE.BoxGeometry(0.16, 0.12, 0.16);
@@ -310,7 +266,6 @@
       Rhand.position.set(0.42, 0.9, 0.6);
       g.add(Rhand);
 
-      /* POSE */
       g.rotation.y = Math.PI * 0.35;
       g.position.y = 0;
 
@@ -321,10 +276,9 @@
        TITLE STEVIE
     ----------------------------- */
     function createTitleStevie() {
-      titleStevieGroup = buildStevie(SKIN_TONES[currentSkinKey]);
+      titleStevieGroup = buildStevie();
       scene.add(titleStevieGroup);
 
-      /* FORCE CAMERA TO SEE HIM */
       setTimeout(() => {
         camera.position.set(0.2, 1.6, 3.3);
         controls.target.set(0, 1.4, 0);
@@ -332,25 +286,15 @@
       }, 50);
     }
 
-    function updateTitleSkin() {
-      const newColor = SKIN_TONES[currentSkinKey];
-      titleStevieGroup.traverse(m => {
-        if (m.isMesh && m.material && m.material.color) {
-          if (m.material.color.r > 0.4) m.material.color.setHex(newColor);
-        }
-      });
-    }
-
     /* -----------------------------
        GAME STEVIE + HAND
     ----------------------------- */
     function createGameStevie() {
-      gameStevieGroup = buildStevie(SKIN_TONES[currentSkinKey]);
+      gameStevieGroup = buildStevie();
       gameStevieGroup.position.set(-1, 0, -1.5);
       gameStevieGroup.visible = false;
       scene.add(gameStevieGroup);
 
-      /* WALL */
       const wall = new THREE.Mesh(
         new THREE.PlaneGeometry(6, 3),
         new THREE.MeshStandardMaterial({ color: 0x111318 })
@@ -358,23 +302,12 @@
       wall.position.set(0, 1.5, -3);
       scene.add(wall);
 
-      /* HAND */
       handMesh = new THREE.Mesh(
         new THREE.BoxGeometry(0.25, 0.12, 0.18),
-        skinMat(SKIN_TONES[currentSkinKey])
+        skinMat()
       );
       handMesh.position.set(1.0, 1.35, -2.7);
       scene.add(handMesh);
-    }
-
-    function updateGameSkin() {
-      const newColor = SKIN_TONES[currentSkinKey];
-      gameStevieGroup.traverse(m => {
-        if (m.isMesh && m.material && m.material.color) {
-          if (m.material.color.r > 0.4) m.material.color.setHex(newColor);
-        }
-      });
-      handMesh.material.color.setHex(newColor);
     }
 
     /* -----------------------------
@@ -385,45 +318,333 @@
       const gameScreen = document.getElementById("game-screen");
       const playButton = document.getElementById("play-button");
 
-      const lightBtn = document.getElementById("skin-light");
-      const tanBtn   = document.getElementById("skin-tan");
-      const darkBtn  = document.getElementById("skin-dark");
+      playButton.onclick = () => {
+        titleScreen.classList.remove("visible");
+        titleScreen.classList.add("hidden");
 
-      lightBtn.style.background = "#f6d2b1";
-      tanBtn.style.background   = "#c48c5e";
-      darkBtn.style.background  = "#73472d";
+        setTimeout(() => {
+          gameScreen.classList.remove("hidden");
+          gameScreen.classList.add("visible");
 
-      function setActive(key) {
-        lightBtn.classList.remove("active");
-        tanBtn.classList.remove("active");
-        darkBtn.classList.remove("active");
-        if (key === "light") lightBtn.classList.add("active");
-        if (key === "tan")   tanBtn.classList.add("active");
-        if (key === "dark")  darkBtn.classList.add("active");
-      }
+          titleStevieGroup.visible = false;<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stevie's Not Alone</title>
 
-      setActive(currentSkinKey);
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #111 0%, #050505 60%, #000 100%);
+      font-family: system-ui, sans-serif;
+      color: #f5f5f5;
+    }
 
-      lightBtn.onclick = () => {
-        currentSkinKey = "light";
-        setActive("light");
-        updateTitleSkin();
-        updateGameSkin();
-      };
+    #ui-root {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+    }
 
-      tanBtn.onclick = () => {
-        currentSkinKey = "tan";
-        setActive("tan");
-        updateTitleSkin();
-        updateGameSkin();
-      };
+    canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+    }
 
-      darkBtn.onclick = () => {
-        currentSkinKey = "dark";
-        setActive("dark");
-        updateTitleSkin();
-        updateGameSkin();
-      };
+    .title-screen, .game-screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+    }
+
+    .visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .title-text {
+      font-size: 3rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 12px rgba(255,255,255,0.25);
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      opacity: 0.7;
+      margin-bottom: 2rem;
+      text-align: center;
+      max-width: 420px;
+    }
+
+    .play-button {
+      margin-top: 1.5rem;
+      padding: 0.7rem 2.5rem;
+      border-radius: 999px;
+      border: 1px solid #ffffff55;
+      background: linear-gradient(135deg, #ffffff22, #ffffff05);
+      color: #f5f5f5;
+      font-size: 1rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      pointer-events: auto;
+      backdrop-filter: blur(6px);
+      transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+
+    .game-screen-label {
+      position: absolute;
+      top: 1rem;
+      left: 1.5rem;
+      font-size: 0.9rem;
+      opacity: 0.7;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .light-switch-hint {
+      position: absolute;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      text-align: right;
+      max-width: 220px;
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+  <div id="ui-root">
+    <div id="title-screen" class="title-screen visible">
+      <div class="title-text">STEVIE'S NOT ALONE</div>
+      <div class="subtitle">
+        Stevie is frozen mid-run, reaching into the dark.<br>
+        Press PLAY to continue.
+      </div>
+
+      <button id="play-button" class="play-button">PLAY</button>
+    </div>
+
+    <div id="game-screen" class="game-screen hidden">
+      <div class="game-screen-label">Bedroom – Prototype</div>
+      <div class="light-switch-hint">
+        The hand near the switch is Stevie's.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* -----------------------------
+       CONSTANTS
+    ----------------------------- */
+    const STEVIE_SKIN = 0xf8e6da; // ghostly pale
+
+    let scene, camera, renderer, controls;
+    let titleStevieGroup, gameStevieGroup, handMesh;
+
+    /* -----------------------------
+       INIT THREE.JS
+    ----------------------------- */
+    function initThree() {
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      document.body.appendChild(renderer.domElement);
+
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0.2, 1.6, 3.3);
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.enablePan = false;
+      controls.target.set(0, 1.4, 0);
+
+      /* LIGHTING */
+      const key = new THREE.DirectionalLight(0xd8d8d8, 1.0);
+      key.position.set(2, 4, 3);
+      scene.add(key);
+
+      const rim = new THREE.DirectionalLight(0xffffff, 0.4);
+      rim.position.set(-3, 3, -2);
+      scene.add(rim);
+
+      scene.add(new THREE.AmbientLight(0x202020, 0.8));
+
+      /* GROUND */
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(20, 20),
+        new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 1 })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      scene.add(ground);
+
+      /* MODELS */
+      createTitleStevie();
+      createGameStevie();
+
+      window.addEventListener("resize", onResize);
+      animate();
+    }
+
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    /* -----------------------------
+       MATERIAL HELPERS
+    ----------------------------- */
+    function skinMat() {
+      return new THREE.MeshStandardMaterial({ color: STEVIE_SKIN, roughness: 0.6 });
+    }
+
+    function hairMat() {
+      return new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
+    }
+
+    function glassesMat() {
+      return new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.7 });
+    }
+
+    /* -----------------------------
+       STEVIE MODEL
+    ----------------------------- */
+    function buildStevie() {
+      const g = new THREE.Group();
+      const skin = skinMat();
+
+      /* HEAD */
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 24, 24), skin);
+      head.position.set(0, 1.85, 0.02);
+      g.add(head);
+
+      /* HAIR */
+      const hair = new THREE.Mesh(
+        new THREE.SphereGeometry(0.3, 24, 24, 0, Math.PI * 2, 0, Math.PI / 1.6),
+        hairMat()
+      );
+      hair.position.set(0, 1.9, 0);
+      g.add(hair);
+
+      /* TORSO */
+      const torso = new THREE.Mesh(
+        new THREE.BoxGeometry(0.6, 0.9, 0.25),
+        new THREE.MeshStandardMaterial({ color: 0x30364a })
+      );
+      torso.position.set(0, 1.1, 0);
+      g.add(torso);
+
+      /* ARMS */
+      const armGeo = new THREE.BoxGeometry(0.14, 0.4, 0.14);
+      const foreGeo = new THREE.BoxGeometry(0.12, 0.35, 0.12);
+      const handGeo = new THREE.BoxGeometry(0.16, 0.12, 0.16);
+
+      const Larm = new THREE.Mesh(armGeo, skin);
+      Larm.position.set(-0.32, 1.25, 0.05);
+      Larm.rotation.x = -1.1;
+      g.add(Larm);
+
+      const Lfore = new THREE.Mesh(foreGeo, skin);
+      Lfore.position.set(-0.42, 1.0, 0.35);
+      g.add(Lfore);
+
+      const Lhand = new THREE.Mesh(handGeo, skin);
+      Lhand.position.set(-0.42, 0.9, 0.6);
+      g.add(Lhand);
+
+      const Rarm = new THREE.Mesh(armGeo, skin);
+      Rarm.position.set(0.32, 1.25, 0.05);
+      Rarm.rotation.x = -1.1;
+      g.add(Rarm);
+
+      const Rfore = new THREE.Mesh(foreGeo, skin);
+      Rfore.position.set(0.42, 1.0, 0.35);
+      g.add(Rfore);
+
+      const Rhand = new THREE.Mesh(handGeo, skin);
+      Rhand.position.set(0.42, 0.9, 0.6);
+      g.add(Rhand);
+
+      g.rotation.y = Math.PI * 0.35;
+      g.position.y = 0;
+
+      return g;
+    }
+
+    /* -----------------------------
+       TITLE STEVIE
+    ----------------------------- */
+    function createTitleStevie() {
+      titleStevieGroup = buildStevie();
+      scene.add(titleStevieGroup);
+
+      setTimeout(() => {
+        camera.position.set(0.2, 1.6, 3.3);
+        controls.target.set(0, 1.4, 0);
+        controls.update();
+      }, 50);
+    }
+
+    /* -----------------------------
+       GAME STEVIE + HAND
+    ----------------------------- */
+    function createGameStevie() {
+      gameStevieGroup = buildStevie();
+      gameStevieGroup.position.set(-1, 0, -1.5);
+      gameStevieGroup.visible = false;
+      scene.add(gameStevieGroup);
+
+      const wall = new THREE.Mesh(
+        new THREE.PlaneGeometry(6, 3),
+        new THREE.MeshStandardMaterial({ color: 0x111318 })
+      );
+      wall.position.set(0, 1.5, -3);
+      scene.add(wall);
+
+      handMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.25, 0.12, 0.18),
+        skinMat()
+      );
+      handMesh.position.set(1.0, 1.35, -2.7);
+      scene.add(handMesh);
+    }
+
+    /* -----------------------------
+       UI LOGIC
+    ----------------------------- */
+    function initUI() {
+      const titleScreen = document.getElementById("title-screen");
+      const gameScreen = document.getElementById("game-screen");
+      const playButton = document.getElementById("play-button");
 
       playButton.onclick = () => {
         titleScreen.classList.remove("visible");
@@ -434,6 +655,24 @@
           gameScreen.classList.add("visible");
 
           titleStevieGroup.visible = false;
+          gameStevieGroup.visible = true;
+
+          camera.position.set(0.3, 1.6, 4.5);
+          controls.target.set(0, 1.4, -2.0);
+          controls.update();
+        }, 400);
+      };
+    }
+
+    /* -----------------------------
+       BOOT
+    ----------------------------- */
+    initThree();
+    initUI();
+  </script>
+</body>
+</html>
+
           gameStevieGroup.visible = true;
 
           camera.position.set(0.3, 1.6, 4.5);
