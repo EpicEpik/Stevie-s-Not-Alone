@@ -155,7 +155,6 @@
       "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
       (font) => {
         gameFont = font;
-        addDoorPlaques();
       }
     );
 
@@ -328,8 +327,7 @@
       if (!gameFont) return;
 
       if (bedroomDoor) {
-        const stevieText = "Stevie's Room! :D";
-        const steviePlaque = makePlaque(stevieText);
+        const steviePlaque = makePlaque("Stevie's Room! :D");
         steviePlaque.position.set(0, 0.6, 0.09);
         bedroomDoor.add(steviePlaque);
       }
@@ -566,6 +564,9 @@
       inFirstPerson = true;
       yaw = 0;
       camera.position.set(0, 1.6, 0);
+
+      // PLAY FIX: add plaques only after scenes & doors exist
+      addDoorPlaques();
     });
 
     window.addEventListener('resize', () => {
