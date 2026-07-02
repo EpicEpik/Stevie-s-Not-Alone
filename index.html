@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Stevie's Not Alone: Demo</title>
-
+  <title>Stevie's Not Alone: Dirty House Build</title>
   <style>
     html, body {
       margin: 0;
@@ -13,203 +12,81 @@
       font-family: system-ui, sans-serif;
       height: 100%;
     }
-
-    #container {
-      position: fixed;
-      inset: 0;
-    }
-
-    canvas {
-      display: block;
-    }
-
-    /* MAIN MENU */
+    #container { position: fixed; inset: 0; }
+    canvas { display: block; }
 
     #main-menu {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background:
-        radial-gradient(circle at top, #222 0%, #000 60%, #000 100%),
-        repeating-linear-gradient(
-          0deg,
-          rgba(255,255,255,0.03) 0px,
-          rgba(255,255,255,0.03) 1px,
-          rgba(0,0,0,0.03) 2px,
-          rgba(0,0,0,0.03) 3px
-        );
+      position: fixed; inset: 0; z-index: 10;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: radial-gradient(circle at top, #222 0%, #000 60%, #000 100%);
       color: #fff;
     }
-
     .menu-title {
-      font-size: 2.4rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 1.5rem;
+      font-size: 2.4rem; letter-spacing: 0.12em;
+      text-transform: uppercase; margin-bottom: 1.5rem;
       text-align: center;
     }
-
-    .menu-options {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      font-size: 1rem;
-    }
-
-    .menu-option {
-      cursor: pointer;
-      color: #ccc;
-    }
-
-    .menu-option:hover {
-      color: #fff;
-    }
-
-    .menu-option.active {
-      color: #fff;
-    }
-
-    .menu-option.active::before {
-      content: ">> ";
-      color: #fff;
-    }
+    .menu-options { display: flex; flex-direction: column; gap: 0.6rem; font-size: 1rem; }
+    .menu-option { cursor: pointer; color: #ccc; }
+    .menu-option:hover { color: #fff; }
+    .menu-option.active { color: #fff; }
+    .menu-option.active::before { content: ">> "; }
 
     .menu-hint {
-      margin-top: 2rem;
-      font-size: 0.8rem;
-      opacity: 0.7;
-      text-align: center;
+      margin-top: 2rem; font-size: 0.8rem;
+      opacity: 0.7; text-align: center;
     }
-
-    /* SETTINGS */
 
     #settings-menu {
-      position: fixed;
-      inset: 0;
-      z-index: 11;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0,0,0,0.9);
-      color: #fff;
+      position: fixed; inset: 0; z-index: 11;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.9); color: #fff;
     }
-
     .settings-panel {
-      background: #111;
-      border: 1px solid #444;
-      padding: 1.5rem 2rem;
-      border-radius: 8px;
+      background: #111; border: 1px solid #444;
+      padding: 1.5rem 2rem; border-radius: 8px;
       min-width: 260px;
     }
-
-    .settings-title {
-      font-size: 1.4rem;
-      margin-bottom: 1rem;
-      text-align: center;
-    }
-
-    .settings-row {
-      margin-bottom: 1rem;
-      font-size: 0.9rem;
-    }
-
-    .settings-row label {
-      display: block;
-      margin-bottom: 0.3rem;
-    }
-
-    .settings-row input[type="range"] {
-      width: 100%;
-    }
-
-    .settings-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-
+    .settings-title { font-size: 1.4rem; margin-bottom: 1rem; text-align: center; }
+    .settings-row { margin-bottom: 1rem; font-size: 0.9rem; }
+    .settings-row label { display: block; margin-bottom: 0.3rem; }
+    .settings-row input[type="range"] { width: 100%; }
+    .settings-buttons { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
     .settings-button {
-      padding: 0.4rem 1.2rem;
-      border-radius: 999px;
-      border: 1px solid #ffffff55;
-      background: #ffffff10;
-      color: #fff;
-      font-size: 0.8rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      cursor: pointer;
+      padding: 0.4rem 1.2rem; border-radius: 999px;
+      border: 1px solid #ffffff55; background: #ffffff10;
+      color: #fff; font-size: 0.8rem; letter-spacing: 0.12em;
+      text-transform: uppercase; cursor: pointer;
     }
-
-    .settings-button:hover {
-      background: #ffffff25;
-    }
-
-    /* OBJECTIVES */
+    .settings-button:hover { background: #ffffff25; }
 
     #objective-panel {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      z-index: 9;
-      background: #f5f1e6;
-      border: 1px solid #c3b9a0;
+      position: fixed; top: 1rem; right: 1rem; z-index: 9;
+      background: #f5f1e6; border: 1px solid #c3b9a0;
       box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-      padding: 0.8rem 1rem;
-      border-radius: 6px;
-      max-width: 260px;
-      font-family: "Segoe UI", system-ui, sans-serif;
+      padding: 0.8rem 1rem; border-radius: 6px;
+      max-width: 260px; font-family: "Segoe UI", system-ui, sans-serif;
     }
-
     #objective-title {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #7a6a4a;
-      margin-bottom: 0.4rem;
+      font-size: 0.8rem; text-transform: uppercase;
+      letter-spacing: 0.12em; color: #7a6a4a; margin-bottom: 0.4rem;
     }
-
-    #objective-text {
-      font-size: 0.9rem;
-      color: #3b2f1a;
-      line-height: 1.3;
-    }
-
-    /* DIALOGUE BAR */
+    #objective-text { font-size: 0.9rem; color: #3b2f1a; line-height: 1.3; }
 
     #dialogue-bar {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 9;
-      background: rgba(0,0,0,0.8);
-      border-top: 1px solid #444;
-      padding: 0.6rem 1rem;
-      display: none;
-      color: #fff;
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 9;
+      background: rgba(0,0,0,0.8); border-top: 1px solid #444;
+      padding: 0.6rem 1rem; display: none; color: #fff;
     }
-
-    #dialogue-speaker {
-      font-weight: 600;
-      margin-right: 0.5rem;
-    }
-
-    #dialogue-text {
-      font-weight: 400;
-    }
+    #dialogue-speaker { font-weight: 600; margin-right: 0.5rem; }
+    #dialogue-text { font-weight: 400; }
   </style>
 </head>
-
 <body>
   <div id="container"></div>
 
-  <!-- MAIN MENU -->
   <div id="main-menu">
     <div class="menu-title">STEVIE'S NOT ALONE</div>
     <div class="menu-options">
@@ -223,34 +100,28 @@
     </div>
   </div>
 
-  <!-- SETTINGS MENU -->
   <div id="settings-menu">
     <div class="settings-panel">
       <div class="settings-title">Settings</div>
-
       <div class="settings-row">
         <label for="master-volume">Master Volume</label>
         <input id="master-volume" type="range" min="0" max="100" value="80">
       </div>
-
       <div class="settings-row">
         <label for="jumpscare-volume">Jumpscare Volume</label>
         <input id="jumpscare-volume" type="range" min="0" max="100" value="60">
       </div>
-
       <div class="settings-buttons">
         <button id="settings-back" class="settings-button">Back</button>
       </div>
     </div>
   </div>
 
-  <!-- OBJECTIVES -->
   <div id="objective-panel">
     <div id="objective-title">Objective</div>
     <div id="objective-text">Leave your room.</div>
   </div>
 
-  <!-- DIALOGUE BAR -->
   <div id="dialogue-bar">
     <span id="dialogue-speaker"></span>
     <span id="dialogue-text"></span>
@@ -259,7 +130,6 @@
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
   <script>
     const container = document.getElementById('container');
-
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
@@ -332,21 +202,16 @@
       );
     }
 
-    // INPUT
     window.addEventListener('keydown', (e) => {
       if (!inFirstPerson) return;
-
       if (e.key === 'ArrowLeft') turningLeft = true;
       if (e.key === 'ArrowRight') turningRight = true;
-
       if (e.key === 'w') moveForward = true;
       if (e.key === 's') moveBackward = true;
       if (e.key === 'a') moveLeft = true;
       if (e.key === 'd') moveRight = true;
-
       if (e.key === 'Shift') sprinting = true;
       if (e.key === 'Control') crouching = true;
-
       if (e.key === 'e') interact();
       if (e.key === 'f') tryLockBathroom();
     });
@@ -354,12 +219,10 @@
     window.addEventListener('keyup', (e) => {
       if (e.key === 'ArrowLeft') turningLeft = false;
       if (e.key === 'ArrowRight') turningRight = false;
-
       if (e.key === 'w') moveForward = false;
       if (e.key === 's') moveBackward = false;
       if (e.key === 'a') moveLeft = false;
       if (e.key === 'd') moveRight = false;
-
       if (e.key === 'Shift') sprinting = false;
       if (e.key === 'Control') crouching = false;
     });
@@ -399,7 +262,6 @@
 
     function updateMovement() {
       if (!inFirstPerson) return;
-
       speed = baseSpeed;
       if (sprinting && !crouching) speed = baseSpeed * 1.8;
       if (crouching) speed = baseSpeed * 0.5;
@@ -410,7 +272,6 @@
       right.crossVectors(dir, camera.up);
 
       const newPos = camera.position.clone();
-
       if (moveForward) newPos.addScaledVector(dir, speed);
       if (moveBackward) newPos.addScaledVector(dir, -speed);
       if (moveLeft) newPos.addScaledVector(right, -speed);
@@ -418,11 +279,9 @@
 
       clampPositionByScene(newPos);
       camera.position.copy(newPos);
-
-      camera.position.y = crouching ? 1.2 : 1.4; // shorter + crouch
+      camera.position.y = crouching ? 1.2 : 1.4;
     }
 
-    // TEXTURE HELPERS
     function makeTextTexture(text) {
       const canvas = document.createElement("canvas");
       canvas.width = 512;
@@ -440,14 +299,13 @@
       return texture;
     }
 
-    // DOOR + PLAQUE
     function makeWoodDoor() {
       const door = new THREE.Group();
       const slab = new THREE.Mesh(
         new THREE.BoxGeometry(1, 2, 0.1),
         new THREE.MeshStandardMaterial({
           color: 0x7a5a3a,
-          roughness: 0.4,
+          roughness: 0.7,
           metalness: 0.1
         })
       );
@@ -455,7 +313,7 @@
 
       const panelMat = new THREE.MeshStandardMaterial({
         color: 0x5a3a1e,
-        roughness: 0.5
+        roughness: 0.8
       });
 
       function addPanel(x, y, w, h) {
@@ -477,7 +335,7 @@
         new THREE.MeshStandardMaterial({
           color: 0xd4af37,
           metalness: 0.8,
-          roughness: 0.2
+          roughness: 0.3
         })
       );
       handle.rotation.z = Math.PI / 2;
@@ -494,7 +352,7 @@
         new THREE.BoxGeometry(0.9, 0.45, 0.05),
         new THREE.MeshStandardMaterial({
           color: 0x7a4a2a,
-          roughness: 0.5,
+          roughness: 0.7,
           metalness: 0.1
         })
       );
@@ -505,7 +363,7 @@
         new THREE.CylinderGeometry(0.02, 0.02, 0.95, 12),
         new THREE.MeshStandardMaterial({
           color: 0x8b5a2b,
-          roughness: 0.5
+          roughness: 0.7
         })
       );
       dowel.rotation.z = Math.PI / 2;
@@ -539,26 +397,23 @@
 
     function addDoorPlaques() {
       if (bedroomDoor && !bedroomDoor._hasPlaque) {
-        const steviePlaque = makePlaque("Stevie's Room! :D");
+        const steviePlaque = makePlaque("Stevie's Room");
         steviePlaque.position.set(0, 0.6, 0.09);
         bedroomDoor.add(steviePlaque);
         bedroomDoor._hasPlaque = true;
       }
-
       if (hallwayDoorBathroom && !hallwayDoorBathroom._hasPlaque) {
         const bathPlaque = makePlaque("Bathroom");
         bathPlaque.position.set(0, 0.6, 0.09);
         hallwayDoorBathroom.add(bathPlaque);
         hallwayDoorBathroom._hasPlaque = true;
       }
-
       if (hallwayDoorParents && !hallwayDoorParents._hasPlaque) {
-        const parentsPlaque = makePlaque("MARY AND ROBERT");
+        const parentsPlaque = makePlaque("Mary & Robert");
         parentsPlaque.position.set(0, 0.6, 0.09);
         hallwayDoorParents.add(parentsPlaque);
         hallwayDoorParents._hasPlaque = true;
       }
-
       if (hallwayDoorStevie && !hallwayDoorStevie._hasPlaque) {
         const stevieHallPlaque = makePlaque("Stevie");
         stevieHallPlaque.position.set(0, 0.6, 0.09);
@@ -567,26 +422,27 @@
       }
     }
 
-    // SCENES
+    let demon, demonState = "asleepParents";
+
     function createBedroom() {
       const s = new THREE.Scene();
-      s.background = new THREE.Color(0x101018);
+      s.background = new THREE.Color(0x08080c);
 
-      const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.6);
       s.add(ambient);
 
-      const mainLight = new THREE.PointLight(0x9fbfff, 1.8, 20);
+      const mainLight = new THREE.PointLight(0xfff2cc, 1.4, 18);
       mainLight.position.set(-2, 3, 2);
       s.add(mainLight);
 
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
-        new THREE.MeshStandardMaterial({ color: 0x505050 })
+        new THREE.MeshStandardMaterial({ color: 0x303030, roughness: 0.9 })
       );
       floor.rotation.x = -Math.PI / 2;
       s.add(floor);
 
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x404050 });
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x303038, roughness: 0.9 });
       const wallGeo = new THREE.PlaneGeometry(10, 5);
 
       const backWall = new THREE.Mesh(wallGeo, wallMat);
@@ -608,34 +464,134 @@
       bedroomDoor.rotation.y = -Math.PI / 2;
       s.add(bedroomDoor);
 
+      // DIRTY MATTRESS
+      const mattress = new THREE.Mesh(
+        new THREE.BoxGeometry(2.2, 0.3, 1.4),
+        new THREE.MeshStandardMaterial({
+          color: 0xb0b0b0,
+          roughness: 0.95,
+          metalness: 0.0
+        })
+      );
+      mattress.position.set(-2.5, 0.15, 1.5);
+      s.add(mattress);
+
+      const stainMat = new THREE.MeshStandardMaterial({
+        color: 0x7a5a3a,
+        roughness: 1.0
+      });
+      const stain1 = new THREE.Mesh(
+        new THREE.BoxGeometry(0.7, 0.02, 0.5),
+        stainMat
+      );
+      stain1.position.set(-2.7, 0.18, 1.3);
+      s.add(stain1);
+
+      const stain2 = stain1.clone();
+      stain2.scale.set(0.6, 1, 1.2);
+      stain2.position.set(-2.3, 0.18, 1.8);
+      s.add(stain2);
+
+      // BROKEN DESK
+      const deskTop = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 0.1, 0.8),
+        new THREE.MeshStandardMaterial({
+          color: 0x4a3a2a,
+          roughness: 0.9
+        })
+      );
+      deskTop.position.set(1.5, 0.7, -2.5);
+      s.add(deskTop);
+
+      const legMat = new THREE.MeshStandardMaterial({
+        color: 0x3a2a1a,
+        roughness: 0.9
+      });
+      const leg1 = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 0.7, 0.08),
+        legMat
+      );
+      leg1.position.set(0.8, 0.35, -2.1);
+      s.add(leg1);
+
+      const leg2 = leg1.clone();
+      leg2.position.set(2.2, 0.35, -2.1);
+      s.add(leg2);
+
+      const leg3 = leg1.clone();
+      leg3.position.set(0.8, 0.35, -2.9);
+      s.add(leg3);
+
+      const leg4 = leg1.clone();
+      leg4.position.set(2.2, 0.2, -2.9);
+      leg4.rotation.z = 0.2;
+      s.add(leg4);
+
+      // FLOOR CLUTTER
+      const clutterMat = new THREE.MeshStandardMaterial({
+        color: 0x555555,
+        roughness: 1.0
+      });
+      const clutter1 = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.02, 0.3),
+        clutterMat
+      );
+      clutter1.position.set(0.5, 0.02, 0.0);
+      s.add(clutter1);
+
+      const clutter2 = clutter1.clone();
+      clutter2.scale.set(0.6, 1, 1.4);
+      clutter2.position.set(-1.0, 0.02, -1.5);
+      s.add(clutter2);
+
+      const clutter3 = clutter1.clone();
+      clutter3.scale.set(0.3, 1, 0.8);
+      clutter3.position.set(2.8, 0.02, 1.0);
+      s.add(clutter3);
+
+      // CRAYON DRAWINGS
+      const drawingMat = new THREE.MeshStandardMaterial({
+        color: 0x202020,
+        roughness: 1.0
+      });
+      const drawing1 = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.2, 0.8),
+        drawingMat
+      );
+      drawing1.position.set(-3.5, 2.0, -4.99);
+      s.add(drawing1);
+
+      const drawing2 = drawing1.clone();
+      drawing2.position.set(-4.5, 1.2, -4.99);
+      drawing2.rotation.z = 0.2;
+      s.add(drawing2);
+
       return s;
     }
 
-    let demon, demonState = "asleepParents";
-
     function createHallway() {
       const s = new THREE.Scene();
-      s.background = new THREE.Color(0x080808);
+      s.background = new THREE.Color(0x050505);
 
-      const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.7);
       s.add(ambient);
 
-      const mainLight = new THREE.PointLight(0xffffff, 2.2, 25);
+      const mainLight = new THREE.PointLight(0xffffff, 1.8, 25);
       mainLight.position.set(0, 3, 0);
       s.add(mainLight);
 
-      const fillLight = new THREE.PointLight(0xffffff, 1.4, 18);
+      const fillLight = new THREE.PointLight(0xfff2cc, 1.0, 15);
       fillLight.position.set(2, 2, -2);
       s.add(fillLight);
 
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(20, 4),
-        new THREE.MeshStandardMaterial({ color: 0x505050 })
+        new THREE.MeshStandardMaterial({ color: 0x303030, roughness: 0.95 })
       );
       floor.rotation.x = -Math.PI / 2;
       s.add(floor);
 
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x404040 });
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x303030, roughness: 0.95 });
       const wallGeo = new THREE.PlaneGeometry(20, 5);
 
       const leftWall = new THREE.Mesh(wallGeo, wallMat);
@@ -668,11 +624,96 @@
       hallwayDoorStevie.rotation.y = 0;
       s.add(hallwayDoorStevie);
 
+      // DIRTY RUG
+      const rug = new THREE.Mesh(
+        new THREE.PlaneGeometry(6, 2),
+        new THREE.MeshStandardMaterial({
+          color: 0x403020,
+          roughness: 1.0
+        })
+      );
+      rug.rotation.x = -Math.PI / 2;
+      rug.position.set(0, 0.01, 0);
+      s.add(rug);
+
+      const rugStain = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.2, 0.6),
+        new THREE.MeshStandardMaterial({
+          color: 0x2a1a10,
+          roughness: 1.0
+        })
+      );
+      rugStain.rotation.x = -Math.PI / 2;
+      rugStain.position.set(-0.5, 0.012, -0.5);
+      s.add(rugStain);
+
+      // CROOKED PHOTOS
+      const photoMat = new THREE.MeshStandardMaterial({
+        color: 0x202020,
+        roughness: 0.9
+      });
+      const photo1 = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.6, 0.05),
+        photoMat
+      );
+      photo1.position.set(-1.9, 2.0, -1.0);
+      photo1.rotation.y = Math.PI / 2;
+      photo1.rotation.z = 0.1;
+      s.add(photo1);
+
+      const photo2 = photo1.clone();
+      photo2.position.set(-1.9, 1.3, 0.5);
+      photo2.rotation.z = -0.2;
+      s.add(photo2);
+
+      // SHOE RACK
+      const rack = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 0.4, 0.4),
+        new THREE.MeshStandardMaterial({
+          color: 0x3a2a1a,
+          roughness: 0.9
+        })
+      );
+      rack.position.set(1.5, 0.2, 1.0);
+      s.add(rack);
+
+      const shoe = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.15, 0.2),
+        new THREE.MeshStandardMaterial({
+          color: 0x202020,
+          roughness: 0.9
+        })
+      );
+      shoe.position.set(1.5, 0.3, 0.9);
+      s.add(shoe);
+
+      // SCRATCHES NEAR PARENTS’ DOOR
+      const scratchMat = new THREE.MeshStandardMaterial({
+        color: 0x101010,
+        roughness: 1.0
+      });
+      const scratch1 = new THREE.Mesh(
+        new THREE.BoxGeometry(0.02, 0.8, 0.01),
+        scratchMat
+      );
+      scratch1.position.set(2.0, 1.5, -1.7);
+      s.add(scratch1);
+
+      const scratch2 = scratch1.clone();
+      scratch2.position.x = 2.05;
+      scratch2.position.y = 1.2;
+      s.add(scratch2);
+
+      const scratch3 = scratch1.clone();
+      scratch3.position.x = 1.95;
+      scratch3.position.y = 1.8;
+      s.add(scratch3);
+
       // DEMON: shadow body + red mask
       const bodyMat = new THREE.MeshStandardMaterial({
         color: 0x050505,
         emissive: new THREE.Color(0x111111),
-        roughness: 0.9
+        roughness: 0.95
       });
       demon = new THREE.Group();
 
@@ -728,7 +769,7 @@
       rim.position.set(0, 2.4, 0.6);
       demon.add(rim);
 
-      demon.position.set(2, 0, -2.5); // behind parents door
+      demon.position.set(2, 0, -2.5);
       s.add(demon);
 
       demonState = "asleepParents";
@@ -738,24 +779,24 @@
 
     function createKitchen() {
       const s = new THREE.Scene();
-      s.background = new THREE.Color(0x101010);
+      s.background = new THREE.Color(0x080808);
 
-      const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.7);
       s.add(ambient);
 
-      const lamp = new THREE.PointLight(0xfff2cc, 2.0, 20);
+      const lamp = new THREE.PointLight(0xfff2cc, 1.8, 20);
       lamp.position.set(0, 3, 0);
       s.add(lamp);
 
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
-        new THREE.MeshStandardMaterial({ color: 0x606050 })
+        new THREE.MeshStandardMaterial({ color: 0x303020, roughness: 0.95 })
       );
       floor.rotation.x = -Math.PI / 2;
       s.add(floor);
 
       const wallGeo = new THREE.PlaneGeometry(10, 5);
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x505050 });
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x303030, roughness: 0.95 });
 
       const backWall = new THREE.Mesh(wallGeo, wallMat);
       backWall.position.set(0, 2.5, -5);
@@ -776,6 +817,147 @@
       kitchenDoorBack.rotation.y = Math.PI;
       s.add(kitchenDoorBack);
 
+      // COUNTERS
+      const counterMat = new THREE.MeshStandardMaterial({
+        color: 0x4a3a2a,
+        roughness: 0.95
+      });
+      const counter = new THREE.Mesh(
+        new THREE.BoxGeometry(4, 0.9, 1.2),
+        counterMat
+      );
+      counter.position.set(-2, 0.45, -3.5);
+      s.add(counter);
+
+      const counterStain = new THREE.Mesh(
+        new THREE.BoxGeometry(1.0, 0.02, 0.6),
+        new THREE.MeshStandardMaterial({
+          color: 0x2a1a10,
+          roughness: 1.0
+        })
+      );
+      counterStain.position.set(-2.0, 0.95, -3.4);
+      s.add(counterStain);
+
+      // FRIDGE
+      const fridge = new THREE.Mesh(
+        new THREE.BoxGeometry(1.2, 2.4, 1.0),
+        new THREE.MeshStandardMaterial({
+          color: 0xc0c0c0,
+          roughness: 0.9
+        })
+      );
+      fridge.position.set(3.5, 1.2, -3.0);
+      s.add(fridge);
+
+      const fridgeDoor = new THREE.Mesh(
+        new THREE.BoxGeometry(0.6, 2.2, 0.05),
+        new THREE.MeshStandardMaterial({
+          color: 0xd0d0d0,
+          roughness: 0.9
+        })
+      );
+      fridgeDoor.position.set(3.8, 1.2, -2.5);
+      fridgeDoor.rotation.y = 0.2;
+      s.add(fridgeDoor);
+
+      // TABLE
+      const tableTop = new THREE.Mesh(
+        new THREE.BoxGeometry(2.4, 0.1, 1.4),
+        new THREE.MeshStandardMaterial({
+          color: 0x4a3a2a,
+          roughness: 0.9
+        })
+      );
+      tableTop.position.set(0, 0.8, -1.0);
+      s.add(tableTop);
+
+      const tableLegMat = new THREE.MeshStandardMaterial({
+        color: 0x3a2a1a,
+        roughness: 0.9
+      });
+      const tLeg1 = new THREE.Mesh(
+        new THREE.BoxGeometry(0.08, 0.8, 0.08),
+        tableLegMat
+      );
+      tLeg1.position.set(-1.0, 0.4, -0.4);
+      s.add(tLeg1);
+
+      const tLeg2 = tLeg1.clone();
+      tLeg2.position.set(1.0, 0.4, -0.4);
+      s.add(tLeg2);
+
+      const tLeg3 = tLeg1.clone();
+      tLeg3.position.set(-1.0, 0.4, -1.6);
+      s.add(tLeg3);
+
+      const tLeg4 = tLeg1.clone();
+      tLeg4.position.set(1.0, 0.4, -1.6);
+      s.add(tLeg4);
+
+      const plate = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.25, 0.02, 16),
+        new THREE.MeshStandardMaterial({
+          color: 0xf0f0f0,
+          roughness: 0.9
+        })
+      );
+      plate.position.set(0.3, 0.86, -1.0);
+      s.add(plate);
+
+      const foodStain = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.15, 0.15, 0.01, 16),
+        new THREE.MeshStandardMaterial({
+          color: 0x8b4513,
+          roughness: 1.0
+        })
+      );
+      foodStain.position.set(0.3, 0.87, -1.0);
+      s.add(foodStain);
+
+      // TRASH BIN
+      const bin = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.4, 0.5, 0.8, 16),
+        new THREE.MeshStandardMaterial({
+          color: 0x202020,
+          roughness: 0.9
+        })
+      );
+      bin.position.set(-3.5, 0.4, -0.5);
+      s.add(bin);
+
+      const trashPile = new THREE.Mesh(
+        new THREE.SphereGeometry(0.5, 12, 8),
+        new THREE.MeshStandardMaterial({
+          color: 0x3a2a1a,
+          roughness: 1.0
+        })
+      );
+      trashPile.position.set(-3.5, 0.9, -0.5);
+      s.add(trashPile);
+
+      // SINK
+      const sink = new THREE.Mesh(
+        new THREE.BoxGeometry(1.0, 0.2, 0.6),
+        new THREE.MeshStandardMaterial({
+          color: 0xc0c0c0,
+          roughness: 0.9
+        })
+      );
+      sink.position.set(-1.5, 0.9, -3.5);
+      s.add(sink);
+
+      const dirtyWater = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.05, 0.4),
+        new THREE.MeshStandardMaterial({
+          color: 0x4a3a2a,
+          roughness: 1.0
+        })
+      );
+      dirtyWater.position.set(-1.5, 0.95, -3.5);
+      s.add(dirtyWater);
+
+      // KEY
       const keyGroup = new THREE.Group();
       const keyHead = new THREE.Mesh(
         new THREE.TorusGeometry(0.15, 0.05, 16, 32),
@@ -800,12 +982,12 @@
         part.material.emissiveIntensity = 0.4;
       });
 
-      keyGroup.position.set(1.5, 1, -1.5);
+      keyGroup.position.set(0.1, 0.9, -1.0);
       s.add(keyGroup);
       keyMesh = keyGroup;
 
       const keyLight = new THREE.PointLight(0xfff2aa, 1.2, 4);
-      keyLight.position.set(1.5, 1.3, -1.5);
+      keyLight.position.set(0.1, 1.2, -1.0);
       s.add(keyLight);
 
       return s;
@@ -813,24 +995,24 @@
 
     function createBathroom() {
       const s = new THREE.Scene();
-      s.background = new THREE.Color(0x202840);
+      s.background = new THREE.Color(0x101820);
 
-      const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.7);
       s.add(ambient);
 
-      const lamp = new THREE.PointLight(0xb0c4ff, 2.0, 18);
+      const lamp = new THREE.PointLight(0xb0c4ff, 1.8, 18);
       lamp.position.set(0, 3, 0);
       s.add(lamp);
 
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
-        new THREE.MeshStandardMaterial({ color: 0x303860 })
+        new THREE.MeshStandardMaterial({ color: 0x202840, roughness: 0.95 })
       );
       floor.rotation.x = -Math.PI / 2;
       s.add(floor);
 
       const wallGeo = new THREE.PlaneGeometry(10, 5);
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x303860 });
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x303860, roughness: 0.95 });
 
       const backWall = new THREE.Mesh(wallGeo, wallMat);
       backWall.position.set(0, 2.5, -5);
@@ -851,24 +1033,114 @@
       bathroomDoorBack.rotation.y = Math.PI;
       s.add(bathroomDoorBack);
 
+      // TOILET
+      const toiletBase = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.4, 0.4, 0.4, 16),
+        new THREE.MeshStandardMaterial({
+          color: 0xd0d0d0,
+          roughness: 0.9
+        })
+      );
+      toiletBase.position.set(-2.5, 0.2, -2.0);
+      s.add(toiletBase);
+
+      const toiletTank = new THREE.Mesh(
+        new THREE.BoxGeometry(0.6, 0.6, 0.3),
+        new THREE.MeshStandardMaterial({
+          color: 0xd0d0d0,
+          roughness: 0.9
+        })
+      );
+      toiletTank.position.set(-2.5, 0.8, -2.0);
+      s.add(toiletTank);
+
+      const toiletStain = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.25, 0.02, 16),
+        new THREE.MeshStandardMaterial({
+          color: 0x8b4513,
+          roughness: 1.0
+        })
+      );
+      toiletStain.position.set(-2.5, 0.42, -2.0);
+      s.add(toiletStain);
+
+      // SINK + MIRROR
+      const sink = new THREE.Mesh(
+        new THREE.BoxGeometry(1.0, 0.2, 0.6),
+        new THREE.MeshStandardMaterial({
+          color: 0xc0c0c0,
+          roughness: 0.9
+        })
+      );
+      sink.position.set(0, 0.9, -4.5);
+      s.add(sink);
+
+      const mirror = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.4, 0.9),
+        new THREE.MeshStandardMaterial({
+          color: 0x202020,
+          roughness: 1.0
+        })
+      );
+      mirror.position.set(0, 1.8, -4.99);
+      s.add(mirror);
+
+      const handprint = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.4, 0.3),
+        new THREE.MeshStandardMaterial({
+          color: 0x303030,
+          roughness: 1.0
+        })
+      );
+      handprint.position.set(0.3, 1.6, -4.98);
+      s.add(handprint);
+
+      // SHOWER
+      const showerWall = new THREE.Mesh(
+        new THREE.BoxGeometry(2.0, 2.5, 0.1),
+        new THREE.MeshStandardMaterial({
+          color: 0x404870,
+          roughness: 0.95
+        })
+      );
+      showerWall.position.set(3.0, 1.5, -3.0);
+      s.add(showerWall);
+
+      const moldPatch = new THREE.Mesh(
+        new THREE.BoxGeometry(0.8, 0.6, 0.02),
+        new THREE.MeshStandardMaterial({
+          color: 0x101010,
+          roughness: 1.0
+        })
+      );
+      moldPatch.position.set(3.0, 1.2, -2.95);
+      s.add(moldPatch);
+
+      const puddle = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.4, 0.8),
+        new THREE.MeshStandardMaterial({
+          color: 0x202840,
+          roughness: 0.9
+        })
+      );
+      puddle.rotation.x = -Math.PI / 2;
+      puddle.position.set(2.8, 0.02, -2.8);
+      s.add(puddle);
+
       return s;
     }
 
-    // SCENE SWITCHING
     function switchTo(sceneName) {
       currentSceneName = sceneName;
-
       if (sceneName === "bedroom") scene = bedroomScene;
       if (sceneName === "hallway") scene = hallwayScene;
       if (sceneName === "kitchen") scene = kitchenScene;
       if (sceneName === "bathroom") scene = bathroomScene;
-
       camera.position.set(0, 1.4, 0);
       yaw = 0;
       updateCameraLook();
     }
 
-    // LOCK BATHROOM
     function tryLockBathroom() {
       if (currentSceneName === "hallway") {
         if (camera.position.distanceTo(hallwayDoorBathroom.position) < 2) {
@@ -882,14 +1154,12 @@
       }
     }
 
-    // INTERACTION
     function interact() {
       if (currentSceneName === "bedroom") {
         if (camera.position.distanceTo(bedroomDoor.position) < 2) {
           switchTo("hallway");
-          // spawn facing bedroom door
           camera.position.set(1.5, 1.4, -1);
-          yaw = Math.PI / 2; // look towards +x (bedroom door)
+          yaw = Math.PI / 2;
           updateCameraLook();
           setObjective("Find the bathroom key in the kitchen.");
         }
@@ -902,7 +1172,6 @@
             setObjective("Go to the kitchen and find the bathroom key.");
             return;
           } else if (!bathroomLocked) {
-            // enter bathroom: THIS triggers demon
             switchTo("bathroom");
             camera.position.set(0, 1.4, 3.5);
             yaw = Math.PI;
@@ -980,7 +1249,6 @@
       }
     }
 
-    // DEMON AI
     function moveDemonTowards(target, speed) {
       const dir = new THREE.Vector3().subVectors(target, demon.position);
       const dist = dir.length();
@@ -1002,7 +1270,7 @@
       }
 
       if (demonState === "stalkingHallway") {
-        const target = new THREE.Vector3(-2, 0, -2); // bathroom door
+        const target = new THREE.Vector3(-2, 0, -2);
         moveDemonTowards(target, 0.015);
         if (demon.position.distanceTo(target) < 0.25) {
           if (!bathroomLocked) {
@@ -1018,7 +1286,7 @@
       }
 
       if (demonState === "toKitchen") {
-        const target = new THREE.Vector3(0, 0, 2); // kitchen door
+        const target = new THREE.Vector3(0, 0, 2);
         moveDemonTowards(target, 0.015);
         if (demon.position.distanceTo(target) < 0.25) {
           demonState = "inKitchen";
@@ -1028,12 +1296,10 @@
       }
 
       if (demonState === "gameOver") {
-        // freeze
         inFirstPerson = false;
       }
     }
 
-    // ANIMATION LOOP
     function animate() {
       requestAnimationFrame(animate);
       const delta = 0.016;
@@ -1043,21 +1309,17 @@
       renderer.render(scene, camera);
     }
 
-    // INIT
     bedroomScene = createBedroom();
     hallwayScene = createHallway();
     kitchenScene = createKitchen();
     bathroomScene = createBathroom();
 
     scene = bedroomScene;
-
     camera.position.set(0, 1.4, 3.5);
     yaw = 0;
     updateCameraLook();
-
     animate();
 
-    // MENU LOGIC
     const mainMenu = document.getElementById('main-menu');
     const settingsMenu = document.getElementById('settings-menu');
 
@@ -1103,15 +1365,12 @@
 
     menuNew.addEventListener('click', startGameNew);
     menuContinue.addEventListener('click', startGameContinue);
-
     menuSettings.addEventListener('click', () => {
       settingsMenu.style.display = 'flex';
     });
-
     menuQuit.addEventListener('click', () => {
       alert("You can't actually quit from here yet, but nice try.");
     });
-
     settingsBack.addEventListener('click', () => {
       settingsMenu.style.display = 'none';
     });
@@ -1119,7 +1378,6 @@
     masterSlider.addEventListener('input', () => {
       masterVolume = masterSlider.value / 100;
     });
-
     jumpscareSlider.addEventListener('input', () => {
       jumpscareVolume = jumpscareSlider.value / 100;
     });
