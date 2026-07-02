@@ -23,8 +23,6 @@
       display: block;
     }
 
-    /* MAIN MENU */
-
     #main-menu {
       position: fixed;
       inset: 0;
@@ -84,8 +82,6 @@
       opacity: 0.7;
       text-align: center;
     }
-
-    /* SETTINGS */
 
     #settings-menu {
       position: fixed;
@@ -150,8 +146,6 @@
       background: #ffffff25;
     }
 
-    /* OBJECTIVES (NOTEBOOK STYLE) */
-
     #objective-panel {
       position: fixed;
       top: 1rem;
@@ -180,8 +174,6 @@
       line-height: 1.3;
     }
 
-    /* DIALOGUE BAR (DDLC STYLE) */
-
     #dialogue-bar {
       position: fixed;
       left: 0;
@@ -209,7 +201,6 @@
 <body>
   <div id="container"></div>
 
-  <!-- MAIN MENU -->
   <div id="main-menu">
     <div class="menu-title">STEVIE'S NOT ALONE</div>
     <div class="menu-options">
@@ -219,12 +210,10 @@
       <div id="menu-quit" class="menu-option">Quit</div>
     </div>
     <div class="menu-hint">
-      Use WASD to move, Arrow keys to look, E to interact.<br>
-      New Game starts in Stevie’s bedroom.
+      WASD move · Arrows look · E interact · F lock door · Shift sprint · Ctrl crouch
     </div>
   </div>
 
-  <!-- SETTINGS MENU -->
   <div id="settings-menu">
     <div class="settings-panel">
       <div class="settings-title">Settings</div>
@@ -245,13 +234,11 @@
     </div>
   </div>
 
-  <!-- OBJECTIVES -->
   <div id="objective-panel">
     <div id="objective-title">Objective</div>
     <div id="objective-text">Leave your room.</div>
   </div>
 
-  <!-- DIALOGUE BAR -->
   <div id="dialogue-bar">
     <span id="dialogue-speaker"></span>
     <span id="dialogue-text"></span>
@@ -286,25 +273,24 @@
     let moveBackward = false;
     let moveLeft = false;
     let moveRight = false;
+    let sprinting = false;
+    let crouching = false;
 
-    let speed = 0.07;
+    let baseSpeed = 0.05;
+    let speed = baseSpeed;
 
     let hasBathroomKey = false;
+    let bathroomLocked = false;
 
-    // Audio settings (no sounds yet, but ready)
     let masterVolume = 0.8;
     let jumpscareVolume = 0.6;
 
-    // DOOR OBJECTS
-    let bedroomDoor, hallwayDoorBathroom, hallwayDoorParents, hallwayDoorKitchen;
+    let bedroomDoor, hallwayDoorBathroom, hallwayDoorParents, hallwayDoorKitchen, hallwayDoorStevie;
     let bathroomDoorBack, kitchenDoorBack;
     let keyMesh;
 
-    // SCENES
     let bedroomScene, hallwayScene, kitchenScene, bathroomScene;
 
-    // OBJECTIVE + DIALOGUE
-    const objectivePanel = document.getElementById('objective-panel');
     const objectiveText = document.getElementById('objective-text');
     const dialogueBar = document.getElementById('dialogue-bar');
     const dialogueSpeaker = document.getElementById('dialogue-speaker');
@@ -319,16 +305,20 @@
       dialogueSpeaker.textContent = speaker + ": ";
       dialogueText.textContent = text;
       dialogueBar.style.display = 'block';
-
       if (dialogueTimeout) clearTimeout(dialogueTimeout);
       dialogueTimeout = setTimeout(() => {
         dialogueBar.style.display = 'none';
       }, duration);
     }
 
-    // ---------------------------------------
-    // INPUT
-    // ---------------------------------------
+    function showTutorial() {
+      showDialogue(
+        "TUTORIAL",
+        "WASD move · Arrows look · E doors · F lock bathroom · Shift sprint · Ctrl crouch.",
+        7000
+      );
+    }
+
     window.addEventListener('keydown', (e) => {
       if (!inFirstPerson) return;
 
@@ -340,7 +330,11 @@
       if (e.key === 'a') moveLeft = true;
       if (e.key === 'd') moveRight = true;
 
+      if (e.key === 'Shift') sprinting = true;
+      if (e.key === 'Control') crouching = true;
+
       if (e.key === 'e') interact();
+      if (e.key === 'f') tryLockBathroom();
     });
 
     window.addEventListener('keyup', (e) => {
@@ -351,18 +345,18 @@
       if (e.key === 's') moveBackward = false;
       if (e.key === 'a') moveLeft = false;
       if (e.key === 'd') moveRight = false;
+
+      if (e.key === 'Shift') sprinting = false;
+      if (e.key === 'Control') crouching = false;
     });
 
     function updateCameraLook() {
       if (!inFirstPerson) return;
-
       const speedLook = 0.03;
       if (turningLeft) yaw += speedLook;
       if (turningRight) yaw -= speedLook;
-
       const dirX = Math.sin(yaw);
       const dirZ = Math.cos(yaw);
-
       camera.lookAt(
         camera.position.x + dirX,
         camera.position.y,
@@ -392,9 +386,12 @@
     function updateMovement() {
       if (!inFirstPerson) return;
 
+      speed = baseSpeed;
+      if (sprinting && !crouching) speed = baseSpeed * 1.8;
+      if (crouching) speed = baseSpeed * 0.5;
+
       const dir = new THREE.Vector3();
       camera.getWorldDirection(dir);
-
       const right = new THREE.Vector3();
       right.crossVectors(dir, camera.up);
 
@@ -407,37 +404,29 @@
 
       clampPositionByScene(newPos);
       camera.position.copy(newPos);
+
+      camera.position.y = crouching ? 1.2 : 1.4; // Stevie shorter + crouch
     }
 
-    // ---------------------------------------
-    // TEXTURE HELPERS (PAINTED TEXT)
-    // ---------------------------------------
     function makeTextTexture(text) {
       const canvas = document.createElement("canvas");
       canvas.width = 512;
       canvas.height = 256;
       const ctx = canvas.getContext("2d");
-
       ctx.fillStyle = "#f5f1e6";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       ctx.fillStyle = "#000";
       ctx.font = "48px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-
       const texture = new THREE.CanvasTexture(canvas);
       texture.needsUpdate = true;
       return texture;
     }
 
-    // ---------------------------------------
-    // DOOR + PLAQUE HELPERS
-    // ---------------------------------------
     function makeWoodDoor() {
       const door = new THREE.Group();
-
       const slab = new THREE.Mesh(
         new THREE.BoxGeometry(1, 2, 0.1),
         new THREE.MeshStandardMaterial({
@@ -553,20 +542,24 @@
         hallwayDoorParents.add(parentsPlaque);
         hallwayDoorParents._hasPlaque = true;
       }
+
+      if (hallwayDoorStevie && !hallwayDoorStevie._hasPlaque) {
+        const stevieHallPlaque = makePlaque("Stevie");
+        stevieHallPlaque.position.set(0, 0.6, 0.09);
+        hallwayDoorStevie.add(stevieHallPlaque);
+        hallwayDoorStevie._hasPlaque = true;
+      }
     }
 
-    // ---------------------------------------
-    // SCENE CREATION
-    // ---------------------------------------
     function createBedroom() {
       const s = new THREE.Scene();
       s.background = new THREE.Color(0x050509);
 
-      const ambient = new THREE.AmbientLight(0x404060, 0.4);
+      const ambient = new THREE.AmbientLight(0x404060, 0.6);
       s.add(ambient);
 
-      const moonLight = new THREE.DirectionalLight(0x8ab4ff, 1.0);
-      moonLight.position.set(-3, 5, 2);
+      const moonLight = new THREE.PointLight(0x8ab4ff, 1.2, 12);
+      moonLight.position.set(-2, 3, 2);
       s.add(moonLight);
 
       const floor = new THREE.Mesh(
@@ -601,6 +594,8 @@
       return s;
     }
 
+    let demon, demonState = "idleParents", demonTimer = 0;
+
     function createHallway() {
       const s = new THREE.Scene();
       s.background = new THREE.Color(0x080808);
@@ -608,8 +603,8 @@
       const ambient = new THREE.AmbientLight(0xffffff, 0.4);
       s.add(ambient);
 
-      const light = new THREE.DirectionalLight(0xffffff, 0.6);
-      light.position.set(3, 5, 2);
+      const light = new THREE.PointLight(0xffffff, 1.2, 15);
+      light.position.set(0, 3, 0);
       s.add(light);
 
       const floor = new THREE.Mesh(
@@ -644,8 +639,55 @@
 
       hallwayDoorKitchen = makeWoodDoor();
       hallwayDoorKitchen.position.set(0, 1, 2);
-      hallwayDoorKitchen.rotation.y = Math.PI; // flipped to face hallway
+      hallwayDoorKitchen.rotation.y = Math.PI;
       s.add(hallwayDoorKitchen);
+
+      hallwayDoorStevie = makeWoodDoor();
+      hallwayDoorStevie.position.set(0, 1, -2.8);
+      hallwayDoorStevie.rotation.y = 0;
+      s.add(hallwayDoorStevie);
+
+      const demonMat = new THREE.MeshStandardMaterial({
+        color: 0x000000,
+        emissive: new THREE.Color(0x222222),
+        roughness: 0.9
+      });
+      demon = new THREE.Group();
+
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.6, 2.4, 0.3),
+        demonMat
+      );
+      body.position.y = 1.4;
+      demon.add(body);
+
+      const head = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.6, 0.3),
+        demonMat
+      );
+      head.position.y = 2.2;
+      demon.add(head);
+
+      const eyeMat = new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+        emissive: new THREE.Color(0xff0000),
+        emissiveIntensity: 1.5
+      });
+      const eyeL = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 8, 8),
+        eyeMat
+      );
+      eyeL.position.set(-0.12, 2.25, 0.16);
+      demon.add(eyeL);
+      const eyeR = eyeL.clone();
+      eyeR.position.x = 0.12;
+      demon.add(eyeR);
+
+      demon.position.set(2, 0, -2.5); // behind parents door
+      s.add(demon);
+
+      demonState = "idleParents";
+      demonTimer = 0;
 
       return s;
     }
@@ -656,6 +698,10 @@
 
       const ambient = new THREE.AmbientLight(0xffffff, 0.4);
       s.add(ambient);
+
+      const lamp = new THREE.PointLight(0xfff2cc, 1.2, 12);
+      lamp.position.set(0, 3, 0);
+      s.add(lamp);
 
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
@@ -683,15 +729,30 @@
 
       kitchenDoorBack = makeWoodDoor();
       kitchenDoorBack.position.set(0, 1, 5);
-      kitchenDoorBack.rotation.y = Math.PI; // face into kitchen
+      kitchenDoorBack.rotation.y = Math.PI;
       s.add(kitchenDoorBack);
 
-      keyMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(0.2, 0.1, 0.05),
-        new THREE.MeshStandardMaterial({ color: 0xffff00 })
+      const keyGroup = new THREE.Group();
+      const keyHead = new THREE.Mesh(
+        new THREE.TorusGeometry(0.15, 0.05, 16, 32),
+        new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.2 })
       );
-      keyMesh.position.set(1.5, 1, -1.5); // not right in front of spawn
-      s.add(keyMesh);
+      keyGroup.add(keyHead);
+      const keyShaft = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.08, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.2 })
+      );
+      keyShaft.position.set(0.3, 0, 0);
+      keyGroup.add(keyShaft);
+      const keyTeeth = new THREE.Mesh(
+        new THREE.BoxGeometry(0.15, 0.08, 0.08),
+        new THREE.MeshStandardMaterial({ color: 0xffd700, metalness: 0.9, roughness: 0.2 })
+      );
+      keyTeeth.position.set(0.55, -0.1, 0);
+      keyGroup.add(keyTeeth);
+      keyGroup.position.set(1.5, 1, -1.5);
+      s.add(keyGroup);
+      keyMesh = keyGroup;
 
       return s;
     }
@@ -702,6 +763,10 @@
 
       const ambient = new THREE.AmbientLight(0xffffff, 0.4);
       s.add(ambient);
+
+      const lamp = new THREE.PointLight(0xb0c4ff, 1.2, 10);
+      lamp.position.set(0, 3, 0);
+      s.add(lamp);
 
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
@@ -729,15 +794,12 @@
 
       bathroomDoorBack = makeWoodDoor();
       bathroomDoorBack.position.set(0, 1, 5);
-      bathroomDoorBack.rotation.y = Math.PI; // face into bathroom
+      bathroomDoorBack.rotation.y = Math.PI;
       s.add(bathroomDoorBack);
 
       return s;
     }
 
-    // ---------------------------------------
-    // SCENE SWITCHING
-    // ---------------------------------------
     function switchTo(sceneName) {
       currentSceneName = sceneName;
 
@@ -746,21 +808,26 @@
       if (sceneName === "kitchen") scene = kitchenScene;
       if (sceneName === "bathroom") scene = bathroomScene;
 
-      camera.position.set(0, 1.6, 0);
+      camera.position.set(0, 1.4, 0);
       yaw = 0;
       updateCameraLook();
     }
 
-    // ---------------------------------------
-    // INTERACTION
-    // ---------------------------------------
+    function tryLockBathroom() {
+      if (currentSceneName === "hallway") {
+        if (camera.position.distanceTo(hallwayDoorBathroom.position) < 2) {
+          bathroomLocked = true;
+          showDialogue("STEVIE", "Locked. He can't get in now...");
+        }
+      }
+    }
+
     function interact() {
       if (currentSceneName === "bedroom") {
         if (camera.position.distanceTo(bedroomDoor.position) < 2) {
           switchTo("hallway");
-          // spawn near right side, facing down hallway (away from bedroom door)
-          camera.position.set(1.5, 1.6, 0);
-          yaw = -Math.PI / 2;
+          camera.position.set(1.5, 1.4, -1);
+          yaw = Math.PI / 2;
           updateCameraLook();
           setObjective("Find the bathroom.");
         }
@@ -772,25 +839,41 @@
             showDialogue("STEVIE", "It's locked... I think the key is in the kitchen.");
             setObjective("Find the bathroom key in the kitchen.");
             return;
-          } else {
+          } else if (!bathroomLocked) {
             switchTo("bathroom");
             setObjective("Use the bathroom, then leave.");
+            return;
+          } else {
+            showDialogue("STEVIE", "I locked it. He can't get in.");
             return;
           }
         }
 
         if (camera.position.distanceTo(hallwayDoorParents.position) < 2) {
-          showDialogue("STEVIE", "No way I'm going in there. Mother and Father would kill me.");
-          return; // truly locked
+          showDialogue("STEVIE", "Mother and Father are asleep... I shouldn't go in.");
+          return;
         }
 
         if (camera.position.distanceTo(hallwayDoorKitchen.position) < 2) {
           switchTo("kitchen");
-          // spawn facing into kitchen
-          camera.position.set(0, 1.6, -3.5);
+          camera.position.set(0, 1.4, -3.5);
           yaw = 0;
           updateCameraLook();
           setObjective("Search the kitchen for the bathroom key.");
+          return;
+        }
+
+        if (camera.position.distanceTo(hallwayDoorStevie.position) < 2) {
+          if (demonState === "inKitchen") {
+            switchTo("bedroom");
+            camera.position.set(0, 1.4, 3.5);
+            yaw = 0;
+            updateCameraLook();
+            setObjective("You made it back to your room.");
+            showDialogue("STEVIE", "Locked the door... I think I'm safe. For now.", 5000);
+          } else {
+            showDialogue("STEVIE", "I shouldn't hide yet. He'll see me.");
+          }
           return;
         }
       }
@@ -798,9 +881,8 @@
       if (currentSceneName === "kitchen") {
         if (camera.position.distanceTo(kitchenDoorBack.position) < 2) {
           switchTo("hallway");
-          // come back facing down hallway
-          camera.position.set(0, 1.6, 1.5);
-          yaw = Math.PI; // look back towards bathroom side
+          camera.position.set(0, 1.4, 1.5);
+          yaw = Math.PI;
           updateCameraLook();
           setObjective("Go back to the bathroom.");
           return;
@@ -818,7 +900,7 @@
       if (currentSceneName === "bathroom") {
         if (camera.position.distanceTo(bathroomDoorBack.position) < 2) {
           switchTo("hallway");
-          camera.position.set(-0.5, 1.6, -1.5);
+          camera.position.set(-0.5, 1.4, -1.5);
           yaw = 0;
           updateCameraLook();
           setObjective("Explore the hallway.");
@@ -827,19 +909,72 @@
       }
     }
 
-    // ---------------------------------------
-    // ANIMATION LOOP
-    // ---------------------------------------
+    function updateDemon(delta) {
+      if (!demon || currentSceneName !== "hallway") return;
+
+      demonTimer += delta;
+
+      if (demonState === "idleParents" && demonTimer > 8) {
+        demonState = "breakingOut";
+        showDialogue("???", "*thud...*", 3000);
+      }
+
+      if (demonState === "breakingOut") {
+        hallwayDoorParents.rotation.y -= 0.01;
+        if (hallwayDoorParents.rotation.y < -Math.PI / 2 - 0.4) {
+          demonState = "stalkingHallway";
+          showDialogue("STEVIE", "What was that...?", 3000);
+        }
+      }
+
+      if (demonState === "stalkingHallway") {
+        const target = new THREE.Vector3(-2, 0, -2); // bathroom door
+        moveDemonTowards(target, 0.01);
+        if (demon.position.distanceTo(target) < 0.2) {
+          if (!bathroomLocked) {
+            showDialogue("STEVIE", "He's going into the bathroom—I'm done for...", 5000);
+            demonState = "gameOver";
+          } else {
+            demonState = "toKitchen";
+            showDialogue("STEVIE", "He can't get in... he's turning around.", 4000);
+          }
+        }
+      }
+
+      if (demonState === "toKitchen") {
+        const target = new THREE.Vector3(0, 0, 2); // kitchen door
+        moveDemonTowards(target, 0.01);
+        if (demon.position.distanceTo(target) < 0.2) {
+          demonState = "inKitchen";
+          showDialogue("STEVIE", "He's going into the kitchen... I need to run to my room.", 5000);
+          setObjective("Run to your hallway door and get back to your room.");
+        }
+      }
+
+      if (demonState === "gameOver") {
+        // simple freeze
+        inFirstPerson = false;
+        showDialogue("GAME", "He found you.", 5000);
+      }
+    }
+
+    function moveDemonTowards(target, speed) {
+      const dir = new THREE.Vector3().subVectors(target, demon.position);
+      const dist = dir.length();
+      if (dist < 0.001) return;
+      dir.normalize();
+      demon.position.addScaledVector(dir, speed);
+    }
+
     function animate() {
       requestAnimationFrame(animate);
+      const delta = 0.016;
       updateCameraLook();
       updateMovement();
+      updateDemon(delta);
       renderer.render(scene, camera);
     }
 
-    // ---------------------------------------
-    // INIT
-    // ---------------------------------------
     bedroomScene = createBedroom();
     hallwayScene = createHallway();
     kitchenScene = createKitchen();
@@ -847,14 +982,12 @@
 
     scene = bedroomScene;
 
-    camera.position.set(0, 2.2, 4.5);
-    camera.lookAt(0, 1, 0);
+    camera.position.set(0, 1.4, 3.5);
+    yaw = 0;
+    updateCameraLook();
 
     animate();
 
-    // ---------------------------------------
-    // MENU LOGIC
-    // ---------------------------------------
     const mainMenu = document.getElementById('main-menu');
     const settingsMenu = document.getElementById('settings-menu');
 
@@ -869,7 +1002,11 @@
 
     function resetGameState() {
       hasBathroomKey = false;
-      keyMesh.visible = true;
+      bathroomLocked = false;
+      if (keyMesh) keyMesh.visible = true;
+      demonState = "idleParents";
+      demonTimer = 0;
+      hallwayDoorParents.rotation.y = -Math.PI / 2;
       setObjective("Leave your room.");
     }
 
@@ -879,10 +1016,11 @@
       inFirstPerson = true;
       resetGameState();
       switchTo("bedroom");
-      camera.position.set(0, 2.2, 4.5);
+      camera.position.set(0, 1.4, 3.5);
       yaw = 0;
       updateCameraLook();
       addDoorPlaques();
+      showTutorial();
     }
 
     function startGameContinue() {
