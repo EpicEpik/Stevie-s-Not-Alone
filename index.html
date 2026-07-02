@@ -3,287 +3,880 @@
 <head>
   <meta charset="UTF-8" />
   <title>Stevie's Not Alone: Demo</title>
+
   <style>
-    body { margin: 0; overflow: hidden; background: #000; }
-    canvas { display: block; }
-    #info {
-      position: absolute;
-      top: 10px;
-      left: 10px;
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: system-ui, sans-serif;
+      height: 100%;
+    }
+
+    #container {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* MAIN MENU */
+
+    #main-menu {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at top, #222 0%, #000 60%, #000 100%),
+        repeating-linear-gradient(
+          0deg,
+          rgba(255,255,255,0.03) 0px,
+          rgba(255,255,255,0.03) 1px,
+          rgba(0,0,0,0.03) 2px,
+          rgba(0,0,0,0.03) 3px
+        );
       color: #fff;
-      font-family: monospace;
-      font-size: 12px;
-      background: rgba(0,0,0,0.5);
-      padding: 8px 10px;
-      border-radius: 4px;
+    }
+
+    .menu-title {
+      font-size: 2.4rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .menu-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      font-size: 1rem;
+    }
+
+    .menu-option {
+      cursor: pointer;
+      color: #ccc;
+    }
+
+    .menu-option:hover {
+      color: #fff;
+    }
+
+    .menu-option.active {
+      color: #fff;
+    }
+
+    .menu-option.active::before {
+      content: ">> ";
+      color: #fff;
+    }
+
+    .menu-hint {
+      margin-top: 2rem;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      text-align: center;
+    }
+
+    /* SETTINGS */
+
+    #settings-menu {
+      position: fixed;
+      inset: 0;
+      z-index: 11;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.9);
+      color: #fff;
+    }
+
+    .settings-panel {
+      background: #111;
+      border: 1px solid #444;
+      padding: 1.5rem 2rem;
+      border-radius: 8px;
+      min-width: 260px;
+    }
+
+    .settings-title {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .settings-row {
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .settings-row label {
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+
+    .settings-row input[type="range"] {
+      width: 100%;
+    }
+
+    .settings-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .settings-button {
+      padding: 0.4rem 1.2rem;
+      border-radius: 999px;
+      border: 1px solid #ffffff55;
+      background: #ffffff10;
+      color: #fff;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .settings-button:hover {
+      background: #ffffff25;
+    }
+
+    /* OBJECTIVES (NOTEBOOK STYLE) */
+
+    #objective-panel {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 9;
+      background: #f5f1e6;
+      border: 1px solid #c3b9a0;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      padding: 0.8rem 1rem;
+      border-radius: 6px;
+      max-width: 260px;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    #objective-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #7a6a4a;
+      margin-bottom: 0.4rem;
+    }
+
+    #objective-text {
+      font-size: 0.9rem;
+      color: #3b2f1a;
+      line-height: 1.3;
+    }
+
+    /* DIALOGUE BAR (DDLC STYLE) */
+
+    #dialogue-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9;
+      background: rgba(0,0,0,0.8);
+      border-top: 1px solid #444;
+      padding: 0.6rem 1rem;
+      display: none;
+      color: #fff;
+    }
+
+    #dialogue-speaker {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+
+    #dialogue-text {
+      font-weight: 400;
     }
   </style>
 </head>
+
 <body>
-<div id="info">
-  Click the bulb to toggle light.<br>
-  Click toys to inspect them (check console).
-</div>
-<script type="module">
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+  <div id="container"></div>
 
-let scene, camera, renderer, controls;
-let raycaster, mouse;
-let bulbMesh, bulbLight;
-let toys = [];
-let bulbOn = true;
+  <!-- MAIN MENU -->
+  <div id="main-menu">
+    <div class="menu-title">STEVIE'S NOT ALONE</div>
+    <div class="menu-options">
+      <div id="menu-new" class="menu-option active">New Game</div>
+      <div id="menu-continue" class="menu-option">Continue</div>
+      <div id="menu-settings" class="menu-option">Settings</div>
+      <div id="menu-quit" class="menu-option">Quit</div>
+    </div>
+    <div class="menu-hint">
+      Use WASD to move, Arrow keys to look, E to interact.<br>
+      New Game starts in Stevie’s bedroom.
+    </div>
+  </div>
 
-init();
-animate();
+  <!-- SETTINGS MENU -->
+  <div id="settings-menu">
+    <div class="settings-panel">
+      <div class="settings-title">Settings</div>
 
-function init() {
-  // Scene, camera, renderer
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x050509);
+      <div class="settings-row">
+        <label for="master-volume">Master Volume</label>
+        <input id="master-volume" type="range" min="0" max="100" value="80">
+      </div>
 
-  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.set(0, 4, 10);
+      <div class="settings-row">
+        <label for="jumpscare-volume">Jumpscare Volume</label>
+        <input id="jumpscare-volume" type="range" min="0" max="100" value="60">
+      </div>
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  document.body.appendChild(renderer.domElement);
+      <div class="settings-buttons">
+        <button id="settings-back" class="settings-button">Back</button>
+      </div>
+    </div>
+  </div>
 
-  controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 2, 0);
-  controls.update();
+  <!-- OBJECTIVES -->
+  <div id="objective-panel">
+    <div id="objective-title">Objective</div>
+    <div id="objective-text">Leave your room.</div>
+  </div>
 
-  raycaster = new THREE.Raycaster();
-  mouse = new THREE.Vector2();
+  <!-- DIALOGUE BAR -->
+  <div id="dialogue-bar">
+    <span id="dialogue-speaker"></span>
+    <span id="dialogue-text"></span>
+  </div>
 
-  // Basic ambient light (very low)
-  const ambient = new THREE.AmbientLight(0x222233, 0.4);
-  scene.add(ambient);
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script>
+    const container = document.getElementById('container');
 
-  // Room dimensions
-  const roomWidth = 10;
-  const roomDepth = 10;
-  const roomHeight = 5;
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x000000);
+    container.appendChild(renderer.domElement);
 
-  // Floor
-  const floorGeo = new THREE.PlaneGeometry(roomWidth, roomDepth);
-  const floorMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9, metalness: 0.0 });
-  const floor = new THREE.Mesh(floorGeo, floorMat);
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.y = 0;
-  scene.add(floor);
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      100
+    );
 
-  // Walls (simple box with inward-facing materials)
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0x303030, roughness: 0.9 });
-  const roomGeo = new THREE.BoxGeometry(roomWidth, roomHeight, roomDepth);
-  const roomMat = [
-    wallMat, wallMat, // left, right
-    wallMat, wallMat, // top, bottom
-    wallMat, wallMat  // front, back
-  ];
-  const room = new THREE.Mesh(roomGeo, roomMat);
-  room.position.y = roomHeight / 2;
-  room.material.side = THREE.BackSide;
-  scene.add(room);
+    let scene;
+    let currentSceneName = "bedroom";
 
-  // WINDOW + CURTAIN (on back wall, centered)
-  const windowWidth = 3;
-  const windowHeight = 2;
-  const windowGeo = new THREE.PlaneGeometry(windowWidth, windowHeight);
-  const windowMat = new THREE.MeshBasicMaterial({
-    color: 0x99bbff,
-    transparent: true,
-    opacity: 0.6
-  });
-  const windowMesh = new THREE.Mesh(windowGeo, windowMat);
-  windowMesh.position.set(0, 3, -roomDepth / 2 + 0.01);
-  scene.add(windowMesh);
+    let yaw = 0;
+    let turningLeft = false;
+    let turningRight = false;
+    let inFirstPerson = false;
 
-  // Curtain (dirty)
-  const curtainGeo = new THREE.PlaneGeometry(windowWidth + 0.4, windowHeight + 0.6);
-  const curtainMat = new THREE.MeshStandardMaterial({
-    color: 0xdddddd,
-    roughness: 1.0,
-    metalness: 0.0
-  });
-  const curtain = new THREE.Mesh(curtainGeo, curtainMat);
-  curtain.position.set(0, 3, -roomDepth / 2 + 0.02);
-  scene.add(curtain);
+    let moveForward = false;
+    let moveBackward = false;
+    let moveLeft = false;
+    let moveRight = false;
 
-  // Add some "mold" via vertex colors-ish (simple dark gradient)
-  curtain.geometry.computeVertexNormals();
-  curtain.material.color.set(0xcccccc);
-  curtain.material.emissive.set(0x000000);
+    let speed = 0.07;
 
-  // MATTRESS (left side)
-  const mattressGeo = new THREE.BoxGeometry(3, 0.4, 1.8);
-  const mattressMat = new THREE.MeshStandardMaterial({
-    color: 0xbba58a,
-    roughness: 0.9,
-    metalness: 0.0
-  });
-  const mattress = new THREE.Mesh(mattressGeo, mattressMat);
-  mattress.position.set(-roomWidth / 2 + 2, 0.2, 0);
-  scene.add(mattress);
+    let hasBathroomKey = false;
 
-  // BULB (center of room, hanging)
-  const bulbGeo = new THREE.SphereGeometry(0.2, 16, 16);
-  const bulbMat = new THREE.MeshStandardMaterial({
-    color: 0xffffee,
-    emissive: 0xffffaa,
-    emissiveIntensity: 1.5,
-    roughness: 0.3,
-    metalness: 0.0
-  });
-  bulbMesh = new THREE.Mesh(bulbGeo, bulbMat);
-  bulbMesh.position.set(0, roomHeight - 0.5, 0);
-  scene.add(bulbMesh);
+    // Audio settings (no sounds yet, but ready)
+    let masterVolume = 0.8;
+    let jumpscareVolume = 0.6;
 
-  // Bulb wire
-  const wireGeo = new THREE.CylinderGeometry(0.03, 0.03, 1.0, 8);
-  const wireMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 });
-  const wire = new THREE.Mesh(wireGeo, wireMat);
-  wire.position.set(0, roomHeight - 1.0, 0);
-  scene.add(wire);
+    // DOOR OBJECTS
+    let bedroomDoor, hallwayDoorBathroom, hallwayDoorParents, hallwayDoorKitchen;
+    let bathroomDoorBack, kitchenDoorBack;
+    let keyMesh;
 
-  // Point light from bulb
-  bulbLight = new THREE.PointLight(0xffffdd, 1.5, 20);
-  bulbLight.position.copy(bulbMesh.position);
-  scene.add(bulbLight);
+    // SCENES
+    let bedroomScene, hallwayScene, kitchenScene, bathroomScene;
 
-  // TOYS (right side, scattered)
-  const toyMaterial = new THREE.MeshStandardMaterial({ color: 0x996633, roughness: 0.8 });
-  const toyPositions = [
-    new THREE.Vector3(roomWidth / 2 - 2, 0.3, 0),
-    new THREE.Vector3(roomWidth / 2 - 1.5, 0.3, 1.5),
-    new THREE.Vector3(roomWidth / 2 - 1.0, 0.3, -1.2)
-  ];
+    // OBJECTIVE + DIALOGUE
+    const objectivePanel = document.getElementById('objective-panel');
+    const objectiveText = document.getElementById('objective-text');
+    const dialogueBar = document.getElementById('dialogue-bar');
+    const dialogueSpeaker = document.getElementById('dialogue-speaker');
+    const dialogueText = document.getElementById('dialogue-text');
+    let dialogueTimeout = null;
 
-  toyPositions.forEach((pos, index) => {
-    const toy = createWoodenToy(toyMaterial);
-    toy.position.copy(pos);
-    toy.userData.type = 'toy';
-    toy.userData.id = 'toy_' + index;
-    scene.add(toy);
-    toys.push(toy);
-  });
-
-  // DOOR (front wall, centered)
-  const doorWidth = 2;
-  const doorHeight = 3;
-  const doorGeo = new THREE.BoxGeometry(doorWidth, doorHeight, 0.2);
-  const doorMat = new THREE.MeshStandardMaterial({ color: 0x553322, roughness: 0.8 });
-  const door = new THREE.Mesh(doorGeo, doorMat);
-  door.position.set(0, doorHeight / 2, roomDepth / 2 - 0.1);
-  scene.add(door);
-
-  // Simple plaque
-  const plaqueGeo = new THREE.PlaneGeometry(1.5, 0.4);
-  const plaqueMat = new THREE.MeshStandardMaterial({ color: 0x886644, roughness: 0.8 });
-  const plaque = new THREE.Mesh(plaqueGeo, plaqueMat);
-  plaque.position.set(0, doorHeight - 0.5, roomDepth / 2 - 0.09);
-  scene.add(plaque);
-
-  // Events
-  window.addEventListener('resize', onWindowResize);
-  renderer.domElement.addEventListener('pointerdown', onPointerDown);
-}
-
-function createWoodenToy(material) {
-  const group = new THREE.Group();
-
-  // Body
-  const bodyGeo = new THREE.BoxGeometry(0.4, 0.8, 0.2);
-  const body = new THREE.Mesh(bodyGeo, material);
-  body.position.y = 0.8;
-  group.add(body);
-
-  // Head
-  const headGeo = new THREE.SphereGeometry(0.2, 16, 16);
-  const head = new THREE.Mesh(headGeo, material);
-  head.position.y = 1.3;
-  group.add(head);
-
-  // Arms
-  const armGeo = new THREE.BoxGeometry(0.6, 0.15, 0.15);
-  const arms = new THREE.Mesh(armGeo, material);
-  arms.position.y = 0.9;
-  group.add(arms);
-
-  // Legs
-  const legGeo = new THREE.BoxGeometry(0.15, 0.6, 0.15);
-  const leftLeg = new THREE.Mesh(legGeo, material);
-  leftLeg.position.set(-0.12, 0.4, 0);
-  const rightLeg = new THREE.Mesh(legGeo, material);
-  rightLeg.position.set(0.12, 0.4, 0);
-  group.add(leftLeg);
-  group.add(rightLeg);
-
-  return group;
-}
-
-function onPointerDown(event) {
-  const rect = renderer.domElement.getBoundingClientRect();
-  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObjects(scene.children, true);
-
-  if (intersects.length > 0) {
-    const obj = intersects[0].object;
-
-    // Bulb toggle
-    if (obj === bulbMesh) {
-      toggleBulb();
-      return;
+    function setObjective(text) {
+      objectiveText.textContent = text;
     }
 
-    // Toys inspect (check parent group)
-    let target = obj;
-    while (target.parent && target.parent !== scene) {
-      if (target.userData && target.userData.type === 'toy') break;
-      target = target.parent;
+    function showDialogue(speaker, text, duration = 3000) {
+      dialogueSpeaker.textContent = speaker + ": ";
+      dialogueText.textContent = text;
+      dialogueBar.style.display = 'block';
+
+      if (dialogueTimeout) clearTimeout(dialogueTimeout);
+      dialogueTimeout = setTimeout(() => {
+        dialogueBar.style.display = 'none';
+      }, duration);
     }
 
-    if (target.userData && target.userData.type === 'toy') {
-      inspectToy(target);
-    }
-  }
-}
+    // ---------------------------------------
+    // INPUT
+    // ---------------------------------------
+    window.addEventListener('keydown', (e) => {
+      if (!inFirstPerson) return;
 
-function toggleBulb() {
-  bulbOn = !bulbOn;
-  bulbLight.intensity = bulbOn ? 1.5 : 0.0;
-  bulbMesh.material.emissiveIntensity = bulbOn ? 1.5 : 0.1;
-  console.log(`Bulb toggled: ${bulbOn ? 'ON' : 'OFF'}`);
-}
+      if (e.key === 'ArrowLeft') turningLeft = true;
+      if (e.key === 'ArrowRight') turningRight = true;
 
-function inspectToy(toy) {
-  console.log(`Inspecting ${toy.userData.id}`);
-  // Simple feedback: briefly change color
-  const originalColor = toy.children[0].material.color.clone();
-  toy.children.forEach(part => {
-    part.material.color.set(0xffcc66);
-  });
-  setTimeout(() => {
-    toy.children.forEach(part => {
-      part.material.color.copy(originalColor);
+      if (e.key === 'w') moveForward = true;
+      if (e.key === 's') moveBackward = true;
+      if (e.key === 'a') moveLeft = true;
+      if (e.key === 'd') moveRight = true;
+
+      if (e.key === 'e') interact();
     });
-  }, 300);
-}
 
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
+    window.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowLeft') turningLeft = false;
+      if (e.key === 'ArrowRight') turningRight = false;
 
-function animate() {
-  requestAnimationFrame(animate);
-  renderer.render(scene, camera);
-}
-</script>
+      if (e.key === 'w') moveForward = false;
+      if (e.key === 's') moveBackward = false;
+      if (e.key === 'a') moveLeft = false;
+      if (e.key === 'd') moveRight = false;
+    });
+
+    function updateCameraLook() {
+      if (!inFirstPerson) return;
+
+      const speedLook = 0.03;
+      if (turningLeft) yaw += speedLook;
+      if (turningRight) yaw -= speedLook;
+
+      const dirX = Math.sin(yaw);
+      const dirZ = Math.cos(yaw);
+
+      camera.lookAt(
+        camera.position.x + dirX,
+        camera.position.y,
+        camera.position.z + dirZ
+      );
+    }
+
+    function updateMovement() {
+      if (!inFirstPerson) return;
+
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+
+      const right = new THREE.Vector3();
+      right.crossVectors(dir, camera.up);
+
+      if (moveForward) camera.position.addScaledVector(dir, speed);
+      if (moveBackward) camera.position.addScaledVector(dir, -speed);
+      if (moveLeft) camera.position.addScaledVector(right, -speed);
+      if (moveRight) camera.position.addScaledVector(right, speed);
+    }
+
+    // ---------------------------------------
+    // TEXTURE HELPERS (PAINTED TEXT)
+    // ---------------------------------------
+    function makeTextTexture(text) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 256;
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "#f5f1e6";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "#000";
+      ctx.font = "48px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.needsUpdate = true;
+      return texture;
+    }
+
+    // ---------------------------------------
+    // DOOR + PLAQUE HELPERS
+    // ---------------------------------------
+    function makeWoodDoor() {
+      const door = new THREE.Group();
+
+      const slab = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 2, 0.1),
+        new THREE.MeshStandardMaterial({
+          color: 0x5a3a1e,
+          roughness: 0.4,
+          metalness: 0.0
+        })
+      );
+      door.add(slab);
+
+      const panelMat = new THREE.MeshStandardMaterial({
+        color: 0x4a2e18,
+        roughness: 0.5
+      });
+
+      function addPanel(x, y, w, h) {
+        const panel = new THREE.Mesh(
+          new THREE.BoxGeometry(w, h, 0.05),
+          panelMat
+        );
+        panel.position.set(x, y, 0.03);
+        door.add(panel);
+      }
+
+      addPanel(0, 1.0, 0.7, 0.5);
+      addPanel(0, 0.3, 0.7, 0.5);
+      addPanel(0, -0.4, 0.7, 0.5);
+      addPanel(0, -1.1, 0.7, 0.5);
+
+      const handle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05, 0.05, 0.3, 16),
+        new THREE.MeshStandardMaterial({
+          color: 0xd4af37,
+          metalness: 0.8,
+          roughness: 0.2
+        })
+      );
+      handle.rotation.z = Math.PI / 2;
+      handle.position.set(0.45, 0.0, 0.08);
+      door.add(handle);
+
+      return door;
+    }
+
+    function makePlaque(text) {
+      const plaqueGroup = new THREE.Group();
+
+      const plaque = new THREE.Mesh(
+        new THREE.BoxGeometry(0.9, 0.45, 0.05),
+        new THREE.MeshStandardMaterial({
+          color: 0x7a4a2a,
+          roughness: 0.5,
+          metalness: 0.1
+        })
+      );
+      plaque.position.set(0, 0, 0.06);
+      plaqueGroup.add(plaque);
+
+      const dowel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.02, 0.02, 0.95, 12),
+        new THREE.MeshStandardMaterial({
+          color: 0x8b5a2b,
+          roughness: 0.5
+        })
+      );
+      dowel.rotation.z = Math.PI / 2;
+      dowel.position.set(0, 0.3, 0.04);
+      plaqueGroup.add(dowel);
+
+      const ropeMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
+      const ropeLeft = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.01, 0.01, 0.25, 8),
+        ropeMat
+      );
+      ropeLeft.rotation.z = Math.PI / 2;
+      ropeLeft.position.set(-0.25, 0.45, 0.02);
+      plaqueGroup.add(ropeLeft);
+
+      const ropeRight = ropeLeft.clone();
+      ropeRight.position.x = 0.25;
+      plaqueGroup.add(ropeRight);
+
+      const textPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.85, 0.4),
+        new THREE.MeshBasicMaterial({
+          map: makeTextTexture(text)
+        })
+      );
+      textPlane.position.set(0, 0, 0.08);
+      plaqueGroup.add(textPlane);
+
+      return plaqueGroup;
+    }
+
+    function addDoorPlaques() {
+      if (bedroomDoor && !bedroomDoor._hasPlaque) {
+        const steviePlaque = makePlaque("Stevie's Room! :D");
+        steviePlaque.position.set(0, 0.6, 0.09);
+        bedroomDoor.add(steviePlaque);
+        bedroomDoor._hasPlaque = true;
+      }
+
+      if (hallwayDoorBathroom && !hallwayDoorBathroom._hasPlaque) {
+        const bathPlaque = makePlaque("Bathroom");
+        bathPlaque.position.set(0, 0.6, 0.09);
+        hallwayDoorBathroom.add(bathPlaque);
+        hallwayDoorBathroom._hasPlaque = true;
+      }
+
+      if (hallwayDoorParents && !hallwayDoorParents._hasPlaque) {
+        const parentsPlaque = makePlaque("MARY AND ROBERT");
+        parentsPlaque.position.set(0, 0.6, 0.09);
+        hallwayDoorParents.add(parentsPlaque);
+        hallwayDoorParents._hasPlaque = true;
+      }
+    }
+
+    // ---------------------------------------
+    // SCENE CREATION
+    // ---------------------------------------
+    function createBedroom() {
+      const s = new THREE.Scene();
+      s.background = new THREE.Color(0x050509);
+
+      const ambient = new THREE.AmbientLight(0x404060, 0.4);
+      s.add(ambient);
+
+      const moonLight = new THREE.DirectionalLight(0x8ab4ff, 1.0);
+      moonLight.position.set(-3, 5, 2);
+      s.add(moonLight);
+
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 10),
+        new THREE.MeshStandardMaterial({ color: 0x202020 })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      s.add(floor);
+
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x181820 });
+      const wallGeo = new THREE.PlaneGeometry(10, 5);
+
+      const backWall = new THREE.Mesh(wallGeo, wallMat);
+      backWall.position.set(0, 2.5, -5);
+      s.add(backWall);
+
+      const leftWall = new THREE.Mesh(wallGeo, wallMat);
+      leftWall.rotation.y = Math.PI / 2;
+      leftWall.position.set(-5, 2.5, 0);
+      s.add(leftWall);
+
+      const rightWall = new THREE.Mesh(wallGeo, wallMat);
+      rightWall.rotation.y = -Math.PI / 2;
+      rightWall.position.set(5, 2.5, 0);
+      s.add(rightWall);
+
+      bedroomDoor = makeWoodDoor();
+      bedroomDoor.position.set(5, 1, -1);
+      bedroomDoor.rotation.y = -Math.PI / 2;
+      s.add(bedroomDoor);
+
+      return s;
+    }
+
+    function createHallway() {
+      const s = new THREE.Scene();
+      s.background = new THREE.Color(0x080808);
+
+      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+      s.add(ambient);
+
+      const light = new THREE.DirectionalLight(0xffffff, 0.6);
+      light.position.set(3, 5, 2);
+      s.add(light);
+
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(20, 4),
+        new THREE.MeshStandardMaterial({ color: 0x202020 })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      s.add(floor);
+
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x181818 });
+      const wallGeo = new THREE.PlaneGeometry(20, 5);
+
+      const leftWall = new THREE.Mesh(wallGeo, wallMat);
+      leftWall.rotation.y = Math.PI / 2;
+      leftWall.position.set(-2, 2.5, 0);
+      s.add(leftWall);
+
+      const rightWall = new THREE.Mesh(wallGeo, wallMat);
+      rightWall.rotation.y = -Math.PI / 2;
+      rightWall.position.set(2, 2.5, 0);
+      s.add(rightWall);
+
+      hallwayDoorBathroom = makeWoodDoor();
+      hallwayDoorBathroom.position.set(-2, 1, -2);
+      hallwayDoorBathroom.rotation.y = Math.PI / 2;
+      s.add(hallwayDoorBathroom);
+
+      hallwayDoorParents = makeWoodDoor();
+      hallwayDoorParents.position.set(2, 1, -2);
+      hallwayDoorParents.rotation.y = -Math.PI / 2;
+      s.add(hallwayDoorParents);
+
+      hallwayDoorKitchen = makeWoodDoor();
+      hallwayDoorKitchen.position.set(0, 1, 2);
+      s.add(hallwayDoorKitchen);
+
+      return s;
+    }
+
+    function createKitchen() {
+      const s = new THREE.Scene();
+      s.background = new THREE.Color(0x101010);
+
+      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+      s.add(ambient);
+
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 10),
+        new THREE.MeshStandardMaterial({ color: 0x303020 })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      s.add(floor);
+
+      const wallGeo = new THREE.PlaneGeometry(10, 5);
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x202020 });
+
+      const backWall = new THREE.Mesh(wallGeo, wallMat);
+      backWall.position.set(0, 2.5, -5);
+      s.add(backWall);
+
+      const leftWall = new THREE.Mesh(wallGeo, wallMat);
+      leftWall.rotation.y = Math.PI / 2;
+      leftWall.position.set(-5, 2.5, 0);
+      s.add(leftWall);
+
+      const rightWall = new THREE.Mesh(wallGeo, wallMat);
+      rightWall.rotation.y = -Math.PI / 2;
+      rightWall.position.set(5, 2.5, 0);
+      s.add(rightWall);
+
+      kitchenDoorBack = makeWoodDoor();
+      kitchenDoorBack.position.set(0, 1, 5);
+      s.add(kitchenDoorBack);
+
+      keyMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 0.1, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0xffff00 })
+      );
+      keyMesh.position.set(1.5, 1, -1.5); // not right in front of spawn
+      s.add(keyMesh);
+
+      return s;
+    }
+
+    function createBathroom() {
+      const s = new THREE.Scene();
+      s.background = new THREE.Color(0x202840);
+
+      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+      s.add(ambient);
+
+      const floor = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 10),
+        new THREE.MeshStandardMaterial({ color: 0x202840 })
+      );
+      floor.rotation.x = -Math.PI / 2;
+      s.add(floor);
+
+      const wallGeo = new THREE.PlaneGeometry(10, 5);
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x202840 });
+
+      const backWall = new THREE.Mesh(wallGeo, wallMat);
+      backWall.position.set(0, 2.5, -5);
+      s.add(backWall);
+
+      const leftWall = new THREE.Mesh(wallGeo, wallMat);
+      leftWall.rotation.y = Math.PI / 2;
+      leftWall.position.set(-5, 2.5, 0);
+      s.add(leftWall);
+
+      const rightWall = new THREE.Mesh(wallGeo, wallMat);
+      rightWall.rotation.y = -Math.PI / 2;
+      rightWall.position.set(5, 2.5, 0);
+      s.add(rightWall);
+
+      bathroomDoorBack = makeWoodDoor();
+      bathroomDoorBack.position.set(0, 1, 5);
+      s.add(bathroomDoorBack);
+
+      return s;
+    }
+
+    // ---------------------------------------
+    // SCENE SWITCHING
+    // ---------------------------------------
+    function switchTo(sceneName) {
+      currentSceneName = sceneName;
+
+      if (sceneName === "bedroom") scene = bedroomScene;
+      if (sceneName === "hallway") scene = hallwayScene;
+      if (sceneName === "kitchen") scene = kitchenScene;
+      if (sceneName === "bathroom") scene = bathroomScene;
+
+      camera.position.set(0, 1.6, 0);
+      yaw = 0;
+    }
+
+    // ---------------------------------------
+    // INTERACTION
+    // ---------------------------------------
+    function interact() {
+      if (currentSceneName === "bedroom") {
+        if (camera.position.distanceTo(bedroomDoor.position) < 2) {
+          switchTo("hallway");
+          setObjective("Find the bathroom.");
+        }
+      }
+
+      if (currentSceneName === "hallway") {
+        if (camera.position.distanceTo(hallwayDoorBathroom.position) < 2) {
+          if (!hasBathroomKey) {
+            showDialogue("STEVIE", "It's locked... I think the key is in the kitchen.");
+            setObjective("Find the bathroom key in the kitchen.");
+            return;
+          } else {
+            switchTo("bathroom");
+            setObjective("Use the bathroom, then leave.");
+            return;
+          }
+        }
+
+        if (camera.position.distanceTo(hallwayDoorParents.position) < 2) {
+          showDialogue("STEVIE", "No way I'm going in there. Mother and Father would kill me.");
+          return; // truly locked
+        }
+
+        if (camera.position.distanceTo(hallwayDoorKitchen.position) < 2) {
+          switchTo("kitchen");
+          setObjective("Search the kitchen for the bathroom key.");
+          return;
+        }
+      }
+
+      if (currentSceneName === "kitchen") {
+        if (camera.position.distanceTo(kitchenDoorBack.position) < 2) {
+          switchTo("hallway");
+          setObjective("Go back to the bathroom.");
+          return;
+        }
+
+        if (!hasBathroomKey && camera.position.distanceTo(keyMesh.position) < 1.2) {
+          hasBathroomKey = true;
+          keyMesh.visible = false;
+          showDialogue("STEVIE", "Got it. Bathroom key. Finally.");
+          setObjective("Unlock the bathroom door.");
+          return;
+        }
+      }
+
+      if (currentSceneName === "bathroom") {
+        if (camera.position.distanceTo(bathroomDoorBack.position) < 2) {
+          switchTo("hallway");
+          setObjective("Explore the hallway.");
+          return;
+        }
+      }
+    }
+
+    // ---------------------------------------
+    // ANIMATION LOOP
+    // ---------------------------------------
+    function animate() {
+      requestAnimationFrame(animate);
+      updateCameraLook();
+      updateMovement();
+      renderer.render(scene, camera);
+    }
+
+    // ---------------------------------------
+    // INIT
+    // ---------------------------------------
+    bedroomScene = createBedroom();
+    hallwayScene = createHallway();
+    kitchenScene = createKitchen();
+    bathroomScene = createBathroom();
+
+    scene = bedroomScene;
+
+    camera.position.set(0, 2.2, 4.5);
+    camera.lookAt(0, 1, 0);
+
+    animate();
+
+    // ---------------------------------------
+    // MENU LOGIC
+    // ---------------------------------------
+    const mainMenu = document.getElementById('main-menu');
+    const settingsMenu = document.getElementById('settings-menu');
+
+    const menuNew = document.getElementById('menu-new');
+    const menuContinue = document.getElementById('menu-continue');
+    const menuSettings = document.getElementById('menu-settings');
+    const menuQuit = document.getElementById('menu-quit');
+
+    const masterSlider = document.getElementById('master-volume');
+    const jumpscareSlider = document.getElementById('jumpscare-volume');
+    const settingsBack = document.getElementById('settings-back');
+
+    function resetGameState() {
+      hasBathroomKey = false;
+      keyMesh.visible = true;
+      setObjective("Leave your room.");
+    }
+
+    function startGameNew() {
+      mainMenu.style.display = 'none';
+      settingsMenu.style.display = 'none';
+      inFirstPerson = true;
+      resetGameState();
+      switchTo("bedroom");
+      addDoorPlaques();
+    }
+
+    function startGameContinue() {
+      mainMenu.style.display = 'none';
+      settingsMenu.style.display = 'none';
+      inFirstPerson = true;
+      switchTo(currentSceneName || "bedroom");
+      addDoorPlaques();
+    }
+
+    menuNew.addEventListener('click', startGameNew);
+    menuContinue.addEventListener('click', startGameContinue);
+
+    menuSettings.addEventListener('click', () => {
+      settingsMenu.style.display = 'flex';
+    });
+
+    menuQuit.addEventListener('click', () => {
+      alert("You can't actually quit from here yet, but nice try.");
+    });
+
+    settingsBack.addEventListener('click', () => {
+      settingsMenu.style.display = 'none';
+    });
+
+    masterSlider.addEventListener('input', () => {
+      masterVolume = masterSlider.value / 100;
+    });
+
+    jumpscareSlider.addEventListener('input', () => {
+      jumpscareVolume = jumpscareSlider.value / 100;
+    });
+
+    window.addEventListener('resize', () => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    });
+  </script>
 </body>
 </html>
