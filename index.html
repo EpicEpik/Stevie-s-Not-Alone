@@ -23,6 +23,8 @@
       display: block;
     }
 
+    /* MAIN MENU */
+
     #main-menu {
       position: fixed;
       inset: 0;
@@ -82,6 +84,8 @@
       opacity: 0.7;
       text-align: center;
     }
+
+    /* SETTINGS */
 
     #settings-menu {
       position: fixed;
@@ -146,6 +150,8 @@
       background: #ffffff25;
     }
 
+    /* OBJECTIVES */
+
     #objective-panel {
       position: fixed;
       top: 1rem;
@@ -174,6 +180,8 @@
       line-height: 1.3;
     }
 
+    /* DIALOGUE BAR */
+
     #dialogue-bar {
       position: fixed;
       left: 0;
@@ -201,6 +209,7 @@
 <body>
   <div id="container"></div>
 
+  <!-- MAIN MENU -->
   <div id="main-menu">
     <div class="menu-title">STEVIE'S NOT ALONE</div>
     <div class="menu-options">
@@ -210,10 +219,11 @@
       <div id="menu-quit" class="menu-option">Quit</div>
     </div>
     <div class="menu-hint">
-      WASD move · Arrows look · E interact · F lock door · Shift sprint · Ctrl crouch
+      WASD move · Arrows look · E interact · F lock bathroom · Shift sprint · Ctrl crouch
     </div>
   </div>
 
+  <!-- SETTINGS MENU -->
   <div id="settings-menu">
     <div class="settings-panel">
       <div class="settings-title">Settings</div>
@@ -234,11 +244,13 @@
     </div>
   </div>
 
+  <!-- OBJECTIVES -->
   <div id="objective-panel">
     <div id="objective-title">Objective</div>
     <div id="objective-text">Leave your room.</div>
   </div>
 
+  <!-- DIALOGUE BAR -->
   <div id="dialogue-bar">
     <span id="dialogue-speaker"></span>
     <span id="dialogue-text"></span>
@@ -276,11 +288,12 @@
     let sprinting = false;
     let crouching = false;
 
-    let baseSpeed = 0.05;
+    let baseSpeed = 0.06;
     let speed = baseSpeed;
 
     let hasBathroomKey = false;
     let bathroomLocked = false;
+    let demonTriggered = false;
 
     let masterVolume = 0.8;
     let jumpscareVolume = 0.6;
@@ -314,11 +327,12 @@
     function showTutorial() {
       showDialogue(
         "TUTORIAL",
-        "WASD move · Arrows look · E doors · F lock bathroom · Shift sprint · Ctrl crouch.",
+        "WASD move · Arrows look · E doors/objects · F lock bathroom · Shift sprint · Ctrl crouch.",
         7000
       );
     }
 
+    // INPUT
     window.addEventListener('keydown', (e) => {
       if (!inFirstPerson) return;
 
@@ -405,9 +419,10 @@
       clampPositionByScene(newPos);
       camera.position.copy(newPos);
 
-      camera.position.y = crouching ? 1.2 : 1.4; // Stevie shorter + crouch
+      camera.position.y = crouching ? 1.2 : 1.4; // shorter + crouch
     }
 
+    // TEXTURE HELPERS
     function makeTextTexture(text) {
       const canvas = document.createElement("canvas");
       canvas.width = 512;
@@ -425,20 +440,21 @@
       return texture;
     }
 
+    // DOOR + PLAQUE
     function makeWoodDoor() {
       const door = new THREE.Group();
       const slab = new THREE.Mesh(
         new THREE.BoxGeometry(1, 2, 0.1),
         new THREE.MeshStandardMaterial({
-          color: 0x5a3a1e,
+          color: 0x7a5a3a,
           roughness: 0.4,
-          metalness: 0.0
+          metalness: 0.1
         })
       );
       door.add(slab);
 
       const panelMat = new THREE.MeshStandardMaterial({
-        color: 0x4a2e18,
+        color: 0x5a3a1e,
         roughness: 0.5
       });
 
@@ -551,25 +567,26 @@
       }
     }
 
+    // SCENES
     function createBedroom() {
       const s = new THREE.Scene();
-      s.background = new THREE.Color(0x050509);
+      s.background = new THREE.Color(0x101018);
 
-      const ambient = new THREE.AmbientLight(0x404060, 0.6);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.7);
       s.add(ambient);
 
-      const moonLight = new THREE.PointLight(0x8ab4ff, 1.2, 12);
-      moonLight.position.set(-2, 3, 2);
-      s.add(moonLight);
+      const mainLight = new THREE.PointLight(0x9fbfff, 1.8, 20);
+      mainLight.position.set(-2, 3, 2);
+      s.add(mainLight);
 
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
-        new THREE.MeshStandardMaterial({ color: 0x202020 })
+        new THREE.MeshStandardMaterial({ color: 0x505050 })
       );
       floor.rotation.x = -Math.PI / 2;
       s.add(floor);
 
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x181820 });
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x404050 });
       const wallGeo = new THREE.PlaneGeometry(10, 5);
 
       const backWall = new THREE.Mesh(wallGeo, wallMat);
@@ -594,27 +611,31 @@
       return s;
     }
 
-    let demon, demonState = "idleParents", demonTimer = 0;
+    let demon, demonState = "asleepParents";
 
     function createHallway() {
       const s = new THREE.Scene();
       s.background = new THREE.Color(0x080808);
 
-      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.8);
       s.add(ambient);
 
-      const light = new THREE.PointLight(0xffffff, 1.2, 15);
-      light.position.set(0, 3, 0);
-      s.add(light);
+      const mainLight = new THREE.PointLight(0xffffff, 2.2, 25);
+      mainLight.position.set(0, 3, 0);
+      s.add(mainLight);
+
+      const fillLight = new THREE.PointLight(0xffffff, 1.4, 18);
+      fillLight.position.set(2, 2, -2);
+      s.add(fillLight);
 
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(20, 4),
-        new THREE.MeshStandardMaterial({ color: 0x202020 })
+        new THREE.MeshStandardMaterial({ color: 0x505050 })
       );
       floor.rotation.x = -Math.PI / 2;
       s.add(floor);
 
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x181818 });
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x404040 });
       const wallGeo = new THREE.PlaneGeometry(20, 5);
 
       const leftWall = new THREE.Mesh(wallGeo, wallMat);
@@ -647,47 +668,70 @@
       hallwayDoorStevie.rotation.y = 0;
       s.add(hallwayDoorStevie);
 
-      const demonMat = new THREE.MeshStandardMaterial({
-        color: 0x000000,
-        emissive: new THREE.Color(0x222222),
+      // DEMON: shadow body + red mask
+      const bodyMat = new THREE.MeshStandardMaterial({
+        color: 0x050505,
+        emissive: new THREE.Color(0x111111),
         roughness: 0.9
       });
       demon = new THREE.Group();
 
       const body = new THREE.Mesh(
-        new THREE.BoxGeometry(0.6, 2.4, 0.3),
-        demonMat
+        new THREE.BoxGeometry(0.7, 2.6, 0.4),
+        bodyMat
       );
-      body.position.y = 1.4;
+      body.position.y = 1.5;
       demon.add(body);
 
+      const headMat = new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+        emissive: new THREE.Color(0xff0000),
+        emissiveIntensity: 1.2,
+        roughness: 0.4
+      });
       const head = new THREE.Mesh(
-        new THREE.BoxGeometry(0.5, 0.6, 0.3),
-        demonMat
+        new THREE.BoxGeometry(0.7, 0.9, 0.3),
+        headMat
       );
-      head.position.y = 2.2;
+      head.position.y = 2.4;
       demon.add(head);
 
       const eyeMat = new THREE.MeshStandardMaterial({
-        color: 0xff0000,
-        emissive: new THREE.Color(0xff0000),
-        emissiveIntensity: 1.5
+        color: 0x000000,
+        emissive: new THREE.Color(0x000000),
+        roughness: 0.9
       });
       const eyeL = new THREE.Mesh(
-        new THREE.SphereGeometry(0.05, 8, 8),
+        new THREE.BoxGeometry(0.18, 0.18, 0.02),
         eyeMat
       );
-      eyeL.position.set(-0.12, 2.25, 0.16);
+      eyeL.position.set(-0.18, 2.5, 0.16);
       demon.add(eyeL);
       const eyeR = eyeL.clone();
-      eyeR.position.x = 0.12;
+      eyeR.position.x = 0.18;
       demon.add(eyeR);
+
+      const teethMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: new THREE.Color(0xffffff),
+        emissiveIntensity: 0.6,
+        roughness: 0.3
+      });
+      const teeth = new THREE.Mesh(
+        new THREE.BoxGeometry(0.5, 0.12, 0.02),
+        teethMat
+      );
+      teeth.position.set(0, 2.25, 0.16);
+      demon.add(teeth);
+
+      const rim = new THREE.PointLight(0xff0000, 0.6, 4);
+      rim.position.set(0, 2.4, 0.6);
+      demon.add(rim);
 
       demon.position.set(2, 0, -2.5); // behind parents door
       s.add(demon);
 
-      demonState = "idleParents";
-      demonTimer = 0;
+      demonState = "asleepParents";
 
       return s;
     }
@@ -696,22 +740,22 @@
       const s = new THREE.Scene();
       s.background = new THREE.Color(0x101010);
 
-      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.8);
       s.add(ambient);
 
-      const lamp = new THREE.PointLight(0xfff2cc, 1.2, 12);
+      const lamp = new THREE.PointLight(0xfff2cc, 2.0, 20);
       lamp.position.set(0, 3, 0);
       s.add(lamp);
 
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
-        new THREE.MeshStandardMaterial({ color: 0x303020 })
+        new THREE.MeshStandardMaterial({ color: 0x606050 })
       );
       floor.rotation.x = -Math.PI / 2;
       s.add(floor);
 
       const wallGeo = new THREE.PlaneGeometry(10, 5);
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x202020 });
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x505050 });
 
       const backWall = new THREE.Mesh(wallGeo, wallMat);
       backWall.position.set(0, 2.5, -5);
@@ -750,9 +794,19 @@
       );
       keyTeeth.position.set(0.55, -0.1, 0);
       keyGroup.add(keyTeeth);
+
+      keyGroup.children.forEach(part => {
+        part.material.emissive = new THREE.Color(0xffd700);
+        part.material.emissiveIntensity = 0.4;
+      });
+
       keyGroup.position.set(1.5, 1, -1.5);
       s.add(keyGroup);
       keyMesh = keyGroup;
+
+      const keyLight = new THREE.PointLight(0xfff2aa, 1.2, 4);
+      keyLight.position.set(1.5, 1.3, -1.5);
+      s.add(keyLight);
 
       return s;
     }
@@ -761,22 +815,22 @@
       const s = new THREE.Scene();
       s.background = new THREE.Color(0x202840);
 
-      const ambient = new THREE.AmbientLight(0xffffff, 0.4);
+      const ambient = new THREE.AmbientLight(0xffffff, 0.8);
       s.add(ambient);
 
-      const lamp = new THREE.PointLight(0xb0c4ff, 1.2, 10);
+      const lamp = new THREE.PointLight(0xb0c4ff, 2.0, 18);
       lamp.position.set(0, 3, 0);
       s.add(lamp);
 
       const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
-        new THREE.MeshStandardMaterial({ color: 0x202840 })
+        new THREE.MeshStandardMaterial({ color: 0x303860 })
       );
       floor.rotation.x = -Math.PI / 2;
       s.add(floor);
 
       const wallGeo = new THREE.PlaneGeometry(10, 5);
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x202840 });
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x303860 });
 
       const backWall = new THREE.Mesh(wallGeo, wallMat);
       backWall.position.set(0, 2.5, -5);
@@ -800,6 +854,7 @@
       return s;
     }
 
+    // SCENE SWITCHING
     function switchTo(sceneName) {
       currentSceneName = sceneName;
 
@@ -813,23 +868,30 @@
       updateCameraLook();
     }
 
+    // LOCK BATHROOM
     function tryLockBathroom() {
       if (currentSceneName === "hallway") {
         if (camera.position.distanceTo(hallwayDoorBathroom.position) < 2) {
+          if (!demonTriggered) {
+            showDialogue("STEVIE", "Why would I lock it now?");
+            return;
+          }
           bathroomLocked = true;
           showDialogue("STEVIE", "Locked. He can't get in now...");
         }
       }
     }
 
+    // INTERACTION
     function interact() {
       if (currentSceneName === "bedroom") {
         if (camera.position.distanceTo(bedroomDoor.position) < 2) {
           switchTo("hallway");
+          // spawn facing bedroom door
           camera.position.set(1.5, 1.4, -1);
-          yaw = Math.PI / 2;
+          yaw = Math.PI / 2; // look towards +x (bedroom door)
           updateCameraLook();
-          setObjective("Find the bathroom.");
+          setObjective("Find the bathroom key in the kitchen.");
         }
       }
 
@@ -837,11 +899,20 @@
         if (camera.position.distanceTo(hallwayDoorBathroom.position) < 2) {
           if (!hasBathroomKey) {
             showDialogue("STEVIE", "It's locked... I think the key is in the kitchen.");
-            setObjective("Find the bathroom key in the kitchen.");
+            setObjective("Go to the kitchen and find the bathroom key.");
             return;
           } else if (!bathroomLocked) {
+            // enter bathroom: THIS triggers demon
             switchTo("bathroom");
-            setObjective("Use the bathroom, then leave.");
+            camera.position.set(0, 1.4, 3.5);
+            yaw = Math.PI;
+            updateCameraLook();
+            setObjective("Use the bathroom... something feels wrong.");
+            if (!demonTriggered) {
+              demonTriggered = true;
+              demonState = "breakingOut";
+              showDialogue("???", "*THUD from the parents' room...*", 4000);
+            }
             return;
           } else {
             showDialogue("STEVIE", "I locked it. He can't get in.");
@@ -892,7 +963,7 @@
           hasBathroomKey = true;
           keyMesh.visible = false;
           showDialogue("STEVIE", "Got it. Bathroom key. Finally.");
-          setObjective("Unlock the bathroom door.");
+          setObjective("Unlock the bathroom door and go inside.");
           return;
         }
       }
@@ -903,61 +974,13 @@
           camera.position.set(-0.5, 1.4, -1.5);
           yaw = 0;
           updateCameraLook();
-          setObjective("Explore the hallway.");
+          setObjective("Lock the bathroom door (F) and watch him.");
           return;
         }
       }
     }
 
-    function updateDemon(delta) {
-      if (!demon || currentSceneName !== "hallway") return;
-
-      demonTimer += delta;
-
-      if (demonState === "idleParents" && demonTimer > 8) {
-        demonState = "breakingOut";
-        showDialogue("???", "*thud...*", 3000);
-      }
-
-      if (demonState === "breakingOut") {
-        hallwayDoorParents.rotation.y -= 0.01;
-        if (hallwayDoorParents.rotation.y < -Math.PI / 2 - 0.4) {
-          demonState = "stalkingHallway";
-          showDialogue("STEVIE", "What was that...?", 3000);
-        }
-      }
-
-      if (demonState === "stalkingHallway") {
-        const target = new THREE.Vector3(-2, 0, -2); // bathroom door
-        moveDemonTowards(target, 0.01);
-        if (demon.position.distanceTo(target) < 0.2) {
-          if (!bathroomLocked) {
-            showDialogue("STEVIE", "He's going into the bathroom—I'm done for...", 5000);
-            demonState = "gameOver";
-          } else {
-            demonState = "toKitchen";
-            showDialogue("STEVIE", "He can't get in... he's turning around.", 4000);
-          }
-        }
-      }
-
-      if (demonState === "toKitchen") {
-        const target = new THREE.Vector3(0, 0, 2); // kitchen door
-        moveDemonTowards(target, 0.01);
-        if (demon.position.distanceTo(target) < 0.2) {
-          demonState = "inKitchen";
-          showDialogue("STEVIE", "He's going into the kitchen... I need to run to my room.", 5000);
-          setObjective("Run to your hallway door and get back to your room.");
-        }
-      }
-
-      if (demonState === "gameOver") {
-        // simple freeze
-        inFirstPerson = false;
-        showDialogue("GAME", "He found you.", 5000);
-      }
-    }
-
+    // DEMON AI
     function moveDemonTowards(target, speed) {
       const dir = new THREE.Vector3().subVectors(target, demon.position);
       const dist = dir.length();
@@ -966,6 +989,51 @@
       demon.position.addScaledVector(dir, speed);
     }
 
+    function updateDemon(delta) {
+      if (!demon || currentSceneName !== "hallway") return;
+
+      if (demonState === "breakingOut") {
+        hallwayDoorParents.rotation.y -= 0.02;
+        if (hallwayDoorParents.rotation.y < -Math.PI / 2 - 0.5) {
+          demonState = "stalkingHallway";
+          showDialogue("STEVIE", "He's out... I need to lock the bathroom.", 4000);
+          setObjective("Lock the bathroom door (F) before he reaches it.");
+        }
+      }
+
+      if (demonState === "stalkingHallway") {
+        const target = new THREE.Vector3(-2, 0, -2); // bathroom door
+        moveDemonTowards(target, 0.015);
+        if (demon.position.distanceTo(target) < 0.25) {
+          if (!bathroomLocked) {
+            demonState = "gameOver";
+            inFirstPerson = false;
+            showDialogue("GAME", "He found you.", 5000);
+          } else {
+            demonState = "toKitchen";
+            showDialogue("STEVIE", "He can't get in... he's turning around.", 4000);
+            setObjective("Wait for him to go to the kitchen, then run to your room.");
+          }
+        }
+      }
+
+      if (demonState === "toKitchen") {
+        const target = new THREE.Vector3(0, 0, 2); // kitchen door
+        moveDemonTowards(target, 0.015);
+        if (demon.position.distanceTo(target) < 0.25) {
+          demonState = "inKitchen";
+          showDialogue("STEVIE", "He's going into the kitchen... I need to run to my room.", 5000);
+          setObjective("Sprint to your hallway door and get back to your room.");
+        }
+      }
+
+      if (demonState === "gameOver") {
+        // freeze
+        inFirstPerson = false;
+      }
+    }
+
+    // ANIMATION LOOP
     function animate() {
       requestAnimationFrame(animate);
       const delta = 0.016;
@@ -975,6 +1043,7 @@
       renderer.render(scene, camera);
     }
 
+    // INIT
     bedroomScene = createBedroom();
     hallwayScene = createHallway();
     kitchenScene = createKitchen();
@@ -988,6 +1057,7 @@
 
     animate();
 
+    // MENU LOGIC
     const mainMenu = document.getElementById('main-menu');
     const settingsMenu = document.getElementById('settings-menu');
 
@@ -1003,9 +1073,9 @@
     function resetGameState() {
       hasBathroomKey = false;
       bathroomLocked = false;
+      demonTriggered = false;
       if (keyMesh) keyMesh.visible = true;
-      demonState = "idleParents";
-      demonTimer = 0;
+      demonState = "asleepParents";
       hallwayDoorParents.rotation.y = -Math.PI / 2;
       setObjective("Leave your room.");
     }
