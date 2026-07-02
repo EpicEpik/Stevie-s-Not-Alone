@@ -47,6 +47,7 @@
       text-transform: uppercase;
       margin-bottom: 1rem;
       text-align: center;
+      color: #fff;
     }
 
     .subtitle {
@@ -55,6 +56,7 @@
       margin-bottom: 2rem;
       text-align: center;
       max-width: 420px;
+      color: #ddd;
     }
 
     .play-button {
@@ -84,6 +86,7 @@
       opacity: 0.7;
       text-align: center;
       pointer-events: none;
+      color: #ccc;
     }
   </style>
 </head>
@@ -102,6 +105,8 @@
   </div>
 
   <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="https://threejs.org/examples/js/loaders/FontLoader.js"></script>
+  <script src="https://threejs.org/examples/js/geometries/TextGeometry.js"></script>
   <script>
     const container = document.getElementById('container');
 
@@ -142,8 +147,20 @@
     // SCENES
     let bedroomScene, hallwayScene, kitchenScene, bathroomScene;
 
+    // FONT
+    let gameFont = null;
+
+    const fontLoader = new THREE.FontLoader();
+    fontLoader.load(
+      "https://threejs.org/examples/fonts/helvetiker_regular.typeface.json",
+      (font) => {
+        gameFont = font;
+        addDoorPlaques();
+      }
+    );
+
     // ---------------------------------------
-    // FIRST PERSON LOOK
+    // INPUT
     // ---------------------------------------
     window.addEventListener('keydown', (e) => {
       if (!inFirstPerson) return;
@@ -202,9 +219,137 @@
     }
 
     // ---------------------------------------
+    // DOOR + PLAQUE HELPERS
+    // ---------------------------------------
+    function makeWoodDoor() {
+      const door = new THREE.Group();
+
+      const slab = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 2, 0.1),
+        new THREE.MeshStandardMaterial({
+          color: 0x5a3a1e,
+          roughness: 0.4,
+          metalness: 0.0
+        })
+      );
+      door.add(slab);
+
+      const panelMat = new THREE.MeshStandardMaterial({
+        color: 0x4a2e18,
+        roughness: 0.5
+      });
+
+      function addPanel(x, y, w, h) {
+        const panel = new THREE.Mesh(
+          new THREE.BoxGeometry(w, h, 0.05),
+          panelMat
+        );
+        panel.position.set(x, y, 0.03);
+        door.add(panel);
+      }
+
+      addPanel(0, 1.0, 0.7, 0.5);
+      addPanel(0, 0.3, 0.7, 0.5);
+      addPanel(0, -0.4, 0.7, 0.5);
+      addPanel(0, -1.1, 0.7, 0.5);
+
+      const handle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05, 0.05, 0.3, 16),
+        new THREE.MeshStandardMaterial({
+          color: 0xd4af37,
+          metalness: 0.8,
+          roughness: 0.2
+        })
+      );
+      handle.rotation.z = Math.PI / 2;
+      handle.position.set(0.45, 0.0, 0.08);
+      door.add(handle);
+
+      return door;
+    }
+
+    function makePlaque(text) {
+      const plaqueGroup = new THREE.Group();
+
+      const plaque = new THREE.Mesh(
+        new THREE.BoxGeometry(0.9, 0.45, 0.05),
+        new THREE.MeshStandardMaterial({
+          color: 0x7a4a2a,
+          roughness: 0.5,
+          metalness: 0.1
+        })
+      );
+      plaque.position.set(0, 0, 0.06);
+      plaqueGroup.add(plaque);
+
+      const dowel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.02, 0.02, 0.95, 12),
+        new THREE.MeshStandardMaterial({
+          color: 0x8b5a2b,
+          roughness: 0.5
+        })
+      );
+      dowel.rotation.z = Math.PI / 2;
+      dowel.position.set(0, 0.3, 0.04);
+      plaqueGroup.add(dowel);
+
+      const ropeMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
+      const ropeLeft = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.01, 0.01, 0.25, 8),
+        ropeMat
+      );
+      ropeLeft.rotation.z = Math.PI / 2;
+      ropeLeft.position.set(-0.25, 0.45, 0.02);
+      plaqueGroup.add(ropeLeft);
+
+      const ropeRight = ropeLeft.clone();
+      ropeRight.position.x = 0.25;
+      plaqueGroup.add(ropeRight);
+
+      if (gameFont) {
+        const textGeo = new THREE.TextGeometry(text, {
+          font: gameFont,
+          size: 0.12,
+          height: 0.01
+        });
+        textGeo.center();
+        const textMesh = new THREE.Mesh(
+          textGeo,
+          new THREE.MeshBasicMaterial({ color: 0x000000 })
+        );
+        textMesh.position.set(0, 0, 0.08);
+        plaqueGroup.add(textMesh);
+      }
+
+      return plaqueGroup;
+    }
+
+    function addDoorPlaques() {
+      if (!gameFont) return;
+
+      if (bedroomDoor) {
+        const stevieText = "Stevie's Room! :D";
+        const steviePlaque = makePlaque(stevieText);
+        steviePlaque.position.set(0, 0.6, 0.09);
+        bedroomDoor.add(steviePlaque);
+      }
+
+      if (hallwayDoorBathroom) {
+        const bathPlaque = makePlaque("Bathroom");
+        bathPlaque.position.set(0, 0.6, 0.09);
+        hallwayDoorBathroom.add(bathPlaque);
+      }
+
+      if (hallwayDoorParents) {
+        const parentsPlaque = makePlaque("MARY AND ROBERT");
+        parentsPlaque.position.set(0, 0.6, 0.09);
+        hallwayDoorParents.add(parentsPlaque);
+      }
+    }
+
+    // ---------------------------------------
     // SCENE CREATION
     // ---------------------------------------
-
     function createBedroom() {
       const s = new THREE.Scene();
       s.background = new THREE.Color(0x050509);
@@ -240,11 +385,7 @@
       rightWall.position.set(5, 2.5, 0);
       s.add(rightWall);
 
-      // Door to hallway
-      bedroomDoor = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 2, 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x552222 })
-      );
+      bedroomDoor = makeWoodDoor();
       bedroomDoor.position.set(5, 1, -1);
       bedroomDoor.rotation.y = -Math.PI / 2;
       s.add(bedroomDoor);
@@ -283,29 +424,17 @@
       rightWall.position.set(2, 2.5, 0);
       s.add(rightWall);
 
-      // Bathroom door
-      hallwayDoorBathroom = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 2, 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x333366 })
-      );
+      hallwayDoorBathroom = makeWoodDoor();
       hallwayDoorBathroom.position.set(-2, 1, -2);
       hallwayDoorBathroom.rotation.y = Math.PI / 2;
       s.add(hallwayDoorBathroom);
 
-      // Parents' room door
-      hallwayDoorParents = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 2, 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x662222 })
-      );
+      hallwayDoorParents = makeWoodDoor();
       hallwayDoorParents.position.set(2, 1, -2);
       hallwayDoorParents.rotation.y = -Math.PI / 2;
       s.add(hallwayDoorParents);
 
-      // Kitchen door
-      hallwayDoorKitchen = new THREE.Mesh(
-        new THREE.BoxGeometry(1, 2, 0.1),
-        new THREE.MeshStandardMaterial({ color: 0x226622 })
-      );
+      hallwayDoorKitchen = makeWoodDoor();
       hallwayDoorKitchen.position.set(0, 1, 2);
       s.add(hallwayDoorKitchen);
 
@@ -326,7 +455,6 @@
       floor.rotation.x = -Math.PI / 2;
       s.add(floor);
 
-      // Key
       keyMesh = new THREE.Mesh(
         new THREE.BoxGeometry(0.2, 0.1, 0.05),
         new THREE.MeshStandardMaterial({ color: 0xffff00 })
@@ -357,7 +485,6 @@
     // ---------------------------------------
     // SCENE SWITCHING
     // ---------------------------------------
-
     function switchTo(sceneName) {
       currentSceneName = sceneName;
 
@@ -372,7 +499,6 @@
     // ---------------------------------------
     // INTERACTION
     // ---------------------------------------
-
     function interact() {
       if (currentSceneName === "bedroom") {
         if (camera.position.distanceTo(bedroomDoor.position) < 2) {
@@ -410,7 +536,6 @@
     // ---------------------------------------
     // ANIMATION LOOP
     // ---------------------------------------
-
     function animate() {
       requestAnimationFrame(animate);
       updateCameraLook();
@@ -421,7 +546,6 @@
     // ---------------------------------------
     // INIT
     // ---------------------------------------
-
     bedroomScene = createBedroom();
     hallwayScene = createHallway();
     kitchenScene = createKitchen();
@@ -433,10 +557,6 @@
     camera.lookAt(0, 1, 0);
 
     animate();
-
-    // ---------------------------------------
-    // TITLE SCREEN
-    // ---------------------------------------
 
     const titleScreen = document.getElementById('title-screen');
     const playButton = document.getElementById('play-button');
