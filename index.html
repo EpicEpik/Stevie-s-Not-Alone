@@ -370,6 +370,25 @@
       );
     }
 
+    function clampPositionByScene(pos) {
+      if (currentSceneName === "bedroom") {
+        pos.x = Math.max(-4.5, Math.min(4.5, pos.x));
+        pos.z = Math.max(-4.5, Math.min(4.5, pos.z));
+      }
+      if (currentSceneName === "hallway") {
+        pos.x = Math.max(-1.8, Math.min(1.8, pos.x));
+        pos.z = Math.max(-3.2, Math.min(3.2, pos.z));
+      }
+      if (currentSceneName === "kitchen") {
+        pos.x = Math.max(-4.5, Math.min(4.5, pos.x));
+        pos.z = Math.max(-4.5, Math.min(4.5, pos.z));
+      }
+      if (currentSceneName === "bathroom") {
+        pos.x = Math.max(-4.5, Math.min(4.5, pos.x));
+        pos.z = Math.max(-4.5, Math.min(4.5, pos.z));
+      }
+    }
+
     function updateMovement() {
       if (!inFirstPerson) return;
 
@@ -379,10 +398,15 @@
       const right = new THREE.Vector3();
       right.crossVectors(dir, camera.up);
 
-      if (moveForward) camera.position.addScaledVector(dir, speed);
-      if (moveBackward) camera.position.addScaledVector(dir, -speed);
-      if (moveLeft) camera.position.addScaledVector(right, -speed);
-      if (moveRight) camera.position.addScaledVector(right, speed);
+      const newPos = camera.position.clone();
+
+      if (moveForward) newPos.addScaledVector(dir, speed);
+      if (moveBackward) newPos.addScaledVector(dir, -speed);
+      if (moveLeft) newPos.addScaledVector(right, -speed);
+      if (moveRight) newPos.addScaledVector(right, speed);
+
+      clampPositionByScene(newPos);
+      camera.position.copy(newPos);
     }
 
     // ---------------------------------------
@@ -620,6 +644,7 @@
 
       hallwayDoorKitchen = makeWoodDoor();
       hallwayDoorKitchen.position.set(0, 1, 2);
+      hallwayDoorKitchen.rotation.y = Math.PI; // flipped to face hallway
       s.add(hallwayDoorKitchen);
 
       return s;
@@ -658,6 +683,7 @@
 
       kitchenDoorBack = makeWoodDoor();
       kitchenDoorBack.position.set(0, 1, 5);
+      kitchenDoorBack.rotation.y = Math.PI; // face into kitchen
       s.add(kitchenDoorBack);
 
       keyMesh = new THREE.Mesh(
@@ -703,6 +729,7 @@
 
       bathroomDoorBack = makeWoodDoor();
       bathroomDoorBack.position.set(0, 1, 5);
+      bathroomDoorBack.rotation.y = Math.PI; // face into bathroom
       s.add(bathroomDoorBack);
 
       return s;
@@ -721,6 +748,7 @@
 
       camera.position.set(0, 1.6, 0);
       yaw = 0;
+      updateCameraLook();
     }
 
     // ---------------------------------------
@@ -730,6 +758,10 @@
       if (currentSceneName === "bedroom") {
         if (camera.position.distanceTo(bedroomDoor.position) < 2) {
           switchTo("hallway");
+          // spawn near right side, facing down hallway (away from bedroom door)
+          camera.position.set(1.5, 1.6, 0);
+          yaw = -Math.PI / 2;
+          updateCameraLook();
           setObjective("Find the bathroom.");
         }
       }
@@ -754,6 +786,10 @@
 
         if (camera.position.distanceTo(hallwayDoorKitchen.position) < 2) {
           switchTo("kitchen");
+          // spawn facing into kitchen
+          camera.position.set(0, 1.6, -3.5);
+          yaw = 0;
+          updateCameraLook();
           setObjective("Search the kitchen for the bathroom key.");
           return;
         }
@@ -762,6 +798,10 @@
       if (currentSceneName === "kitchen") {
         if (camera.position.distanceTo(kitchenDoorBack.position) < 2) {
           switchTo("hallway");
+          // come back facing down hallway
+          camera.position.set(0, 1.6, 1.5);
+          yaw = Math.PI; // look back towards bathroom side
+          updateCameraLook();
           setObjective("Go back to the bathroom.");
           return;
         }
@@ -778,6 +818,9 @@
       if (currentSceneName === "bathroom") {
         if (camera.position.distanceTo(bathroomDoorBack.position) < 2) {
           switchTo("hallway");
+          camera.position.set(-0.5, 1.6, -1.5);
+          yaw = 0;
+          updateCameraLook();
           setObjective("Explore the hallway.");
           return;
         }
@@ -836,6 +879,9 @@
       inFirstPerson = true;
       resetGameState();
       switchTo("bedroom");
+      camera.position.set(0, 2.2, 4.5);
+      yaw = 0;
+      updateCameraLook();
       addDoorPlaques();
     }
 
